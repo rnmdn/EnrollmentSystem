@@ -45,6 +45,8 @@ export function startServer(port = 3001, databasePath = resolve(root, 'data', 'r
       if (termMatch && req.method === 'POST') { json(res, 200, store.activateTerm(decodeURIComponent(termMatch[1]), null)); return; }
       if (path === '/api/import' && req.method === 'POST') { json(res, 200, store.importData(await body(req), null)); return; }
       if (path === '/api/students' && req.method === 'POST') { json(res, 201, store.addStudent(await body(req), null)); return; }
+      const completedMatch = /^\/api\/students\/([^/]+)\/completed-subjects$/.exec(path);
+      if (completedMatch && req.method === 'POST') { json(res, 201, store.completeSubject(decodeURIComponent(completedMatch[1]), (await body(req)).code, null)); return; }
       const studentMatch = /^\/api\/students\/([^/]+)$/.exec(path);
       if (studentMatch && req.method === 'PUT') { json(res, 200, store.updateStudent(decodeURIComponent(studentMatch[1]), await body(req), null)); return; }
       if (path === '/api/sections' && req.method === 'POST') { json(res, 201, store.addSection(await body(req), null)); return; }

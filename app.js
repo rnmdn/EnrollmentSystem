@@ -143,7 +143,18 @@ function students() {
 function studentForm(student = null) {
   const edit = Boolean(student);
   return heading('Master records / Students', edit ? 'Edit student record' : 'Register a student', edit ? 'Update this student’s master record.' : 'A permanent student ID will be generated when the record is saved.', `<button class="button" data-page="students" type="button">← Back to students</button>`) + noticeHTML() +
-    `<section class="panel form-panel"><div class="panel-head"><div><h2>Student information</h2><p class="panel-note">Fields marked * are required.</p></div></div><form id="student-form" data-id="${esc(student?.id || '')}"><div class="form-grid"><div class="field"><label for="first">First name *</label><input id="first" name="first" value="${esc(student?.first || '')}" required maxlength="60" autocomplete="given-name"></div><div class="field"><label for="last">Last name *</label><input id="last" name="last" value="${esc(student?.last || '')}" required maxlength="60" autocomplete="family-name"></div><div class="field full"><label for="email">Email address *</label><input id="email" name="email" type="email" value="${esc(student?.email || '')}" required maxlength="120" autocomplete="email"></div><div class="field"><label for="program">Program *</label><select id="program" name="program" required><option value="">Choose a program</option>${['BS Computer Science','BS Information Technology','BS Business Administration','BS Accountancy','BA Communication'].map(program => `<option value="${esc(program)}" ${student?.program === program ? 'selected' : ''}>${esc(program)}</option>`).join('')}</select></div><div class="field"><label for="level">Year level *</label><select id="level" name="level" required>${['1st year','2nd year','3rd year','4th year'].map(level => `<option ${student?.level === level ? 'selected' : ''}>${level}</option>`).join('')}</select></div><div class="field"><label for="admitted">Admission date *</label><input id="admitted" name="admitted" placeholder="MM/DD/YYYY" value="${esc(student?.admitted || '')}" required><span class="field-help">Type a date or select it from the calendar.</span></div><div class="field"><label for="student-status">Status *</label><select id="student-status" name="status"><option ${student?.status !== 'Inactive' ? 'selected' : ''}>Active</option><option ${student?.status === 'Inactive' ? 'selected' : ''}>Inactive</option></select></div></div><div class="form-actions"><button class="button primary" type="submit">${edit ? 'Save changes' : 'Register student'}</button><button class="button" data-page="students" type="button">Cancel</button></div></form></section>`;
+    `<section class="panel form-panel"><div class="panel-head"><div><h2>Student information</h2><p class="panel-note">Fields marked * are required. Existing records are checked before a new ID is issued.</p></div></div><form id="student-form" data-id="${esc(student?.id || '')}"><div class="form-grid">
+    <div class="field"><label for="first">First name *</label><input id="first" name="first" value="${esc(student?.first || '')}" required maxlength="60" autocomplete="given-name"></div>
+    <div class="field"><label for="last">Last name *</label><input id="last" name="last" value="${esc(student?.last || '')}" required maxlength="60" autocomplete="family-name"></div>
+    <div class="field"><label for="birth">Birth date *</label><input id="birth" name="birth" placeholder="MM/DD/YYYY" value="${esc(student?.birth || '')}" required></div>
+    <div class="field"><label for="gender">Gender *</label><select id="gender" name="gender" required><option value="">Choose</option>${['Female','Male','Nonbinary','Prefer not to say'].map(gender => `<option ${student?.gender === gender ? 'selected' : ''}>${gender}</option>`).join('')}</select></div>
+    <div class="field full"><label for="address">Address *</label><input id="address" name="address" value="${esc(student?.address || '')}" required maxlength="240" autocomplete="street-address"></div>
+    <div class="field"><label for="phone">Contact number *</label><input id="phone" name="phone" type="tel" value="${esc(student?.phone || '')}" required maxlength="40" autocomplete="tel"></div>
+    <div class="field"><label for="email">Email address *</label><input id="email" name="email" type="email" value="${esc(student?.email || '')}" required maxlength="120" autocomplete="email"></div>
+    <div class="field"><label for="program">Program / course *</label><select id="program" name="program" required><option value="">Choose a program</option>${['BS Computer Science','BS Information Technology','BS Business Administration','BS Accountancy','BA Communication'].map(program => `<option value="${esc(program)}" ${student?.program === program ? 'selected' : ''}>${esc(program)}</option>`).join('')}</select></div>
+    <div class="field"><label for="level">Year level *</label><select id="level" name="level" required>${['1st year','2nd year','3rd year','4th year'].map(level => `<option ${student?.level === level ? 'selected' : ''}>${level}</option>`).join('')}</select></div>
+    <div class="field"><label for="admitted">Admission date *</label><input id="admitted" name="admitted" placeholder="MM/DD/YYYY" value="${esc(student?.admitted || '')}" required></div>
+    <div class="field"><label for="student-status">Status *</label><select id="student-status" name="status"><option ${student?.status !== 'Inactive' ? 'selected' : ''}>Active</option><option ${student?.status === 'Inactive' ? 'selected' : ''}>Inactive</option></select></div></div><div class="form-actions"><button class="button primary" type="submit">${edit ? 'Save changes' : 'Check and register student'}</button><button class="button" data-page="students" type="button">Cancel</button></div></form></section>`;
 }
 
 function studentDetail(student) {
@@ -205,6 +216,13 @@ function render() {
   const navPage = page.startsWith('student') ? 'students' : page.startsWith('section') ? 'sections' : page;
   $(`.nav-link[data-page="${navPage}"]`).addClass('active').attr('aria-current', 'page');
   if (page.startsWith('student-new') || page.startsWith('student-edit:')) $('#admitted').datepicker({ dateFormat: 'mm/dd/yy', changeMonth: true, changeYear: true, yearRange: '1990:+0', maxDate: 0 });
+  if (page.startsWith('student-new') || page.startsWith('student-edit:')) $('#birth').datepicker({ dateFormat: 'mm/dd/yy', changeMonth: true, changeYear: true, yearRange: '1950:+0', maxDate: 0 });
+  if (page === 'section-new') $('#section-form .form-grid').append(`<div class="field full"><label for="prerequisites">Prerequisite subject codes</label><input id="prerequisites" name="prerequisites" placeholder="e.g. CS 101, MATH 101"><span class="field-help">Separate codes with commas. Each subject must already exist.</span></div>`);
+  if (page.startsWith('student:')) {
+    const student = studentById(page.split(':')[1]);
+    const completed = (data.completed || []).filter(item => item.studentId === student.id).map(item => item.code);
+    $('#main .panel:first').append(`<div class="detail-row"><span>Birth date</span><span>${esc(student.birth || 'Not recorded')}</span></div><div class="detail-row"><span>Gender</span><span>${esc(student.gender || 'Not recorded')}</span></div><div class="detail-row"><span>Address</span><span>${esc(student.address || 'Not recorded')}</span></div><div class="detail-row"><span>Contact number</span><span>${esc(student.phone || 'Not recorded')}</span></div><div class="detail-row"><span>Completed subjects</span><span>${esc(completed.join(', ') || 'None recorded')}</span></div><form id="completed-form" data-student="${esc(student.id)}" class="form-actions"><label for="completed-code">Record completed subject</label><input id="completed-code" name="code" placeholder="Subject code" required><button class="button" type="submit">Record completion</button></form>`);
+  }
   if (page === 'enroll') $('#enroll-student').autocomplete({ minLength: 0, source: data.students.filter(student => student.status === 'Active').map(student => ({ label: `${fullName(student)} (${student.id})`, value: `${fullName(student)} (${student.id})`, id: student.id })), select: (_event, ui) => { selectedStudentId = ui.item.id; setTimeout(render, 0); } });
 }
 
@@ -236,9 +254,11 @@ $(document).on('submit', '#student-form', async function (event) {
   const id = this.dataset.id;
   const email = fields.email.trim().toLowerCase();
   try {
-    const parsed = $.datepicker.parseDate('mm/dd/yy', fields.admitted);
-    if (parsed > new Date()) throw new Error('future date');
-  } catch { alertUser('Enter a valid admission date that is not in the future.', 'error'); return; }
+    for (const [label, value] of [['birth date', fields.birth], ['admission date', fields.admitted]]) {
+      const parsed = $.datepicker.parseDate('mm/dd/yy', value);
+      if (parsed > new Date()) throw new Error(label);
+    }
+  } catch { alertUser('Enter valid birth and admission dates that are not in the future.', 'error'); return; }
   try {
     const record = await api(id ? `/students/${encodeURIComponent(id)}` : '/students', id ? 'PUT' : 'POST', { ...fields, email });
     await refreshData();
@@ -246,6 +266,11 @@ $(document).on('submit', '#student-form', async function (event) {
     page = `student:${record.id}`;
     alertUser(id ? 'Student record updated.' : `Student registered with number ${record.id}.`);
   } catch (error) { alertUser(error.message, 'error'); }
+});
+$(document).on('submit', '#completed-form', async function (event) {
+  event.preventDefault();
+  try { await api(`/students/${encodeURIComponent(this.dataset.student)}/completed-subjects`, 'POST', { code: this.elements.code.value }); await refreshData(); alertUser('Completed subject recorded.'); }
+  catch (error) { alertUser(error.message, 'error'); }
 });
 $(document).on('submit', '#section-form', async function (event) {
   event.preventDefault(); const fields = Object.fromEntries(new FormData(this));
@@ -260,8 +285,14 @@ $(document).on('submit', '#enroll-form', async function (event) {
   if (!student || student.status !== 'Active') { alertUser('Choose an active student from the suggestions.', 'error'); return; }
   selectedStudentId = student.id;
   if (!section) { alertUser('Choose a section.', 'error'); return; }
-  try { await api('/enrollments', 'POST', { studentId: student.id, sectionId: section.id }); await refreshData(); alertUser(`${fullName(student)} was allocated to ${section.code} · ${section.section}.`); }
-  catch (error) { alertUser(error.message, 'error'); }
+  const prerequisites = section.prerequisites || 'None';
+  $('#confirm-dialog').html(`<p>Review enrollment for <strong>${esc(fullName(student))}</strong> (${esc(student.id)}).</p><p><strong>${esc(sectionLabel(section))}</strong><br>${esc(section.day)} · ${esc(timeRange(section))} · ${esc(section.room)}<br>Instructor: ${esc(section.instructor)}<br>Seats: ${count(section.id)}/${section.capacity}<br>Prerequisites: ${esc(prerequisites)}</p>`).dialog({ modal: true, resizable: false, width: Math.min(460, window.innerWidth - 30), buttons: [
+    { text: 'Change selection', click() { $(this).dialog('close'); } },
+    { text: 'Confirm enrollment', async click() {
+      try { await api('/enrollments', 'POST', { studentId: student.id, sectionId: section.id }); await refreshData(); $(this).dialog('close'); page = 'schedule'; alertUser(`${fullName(student)} was enrolled in ${section.code} · ${section.section}.`); }
+      catch (error) { $(this).dialog('close'); alertUser(error.message, 'error'); }
+    } }
+  ] });
 });
 $(document).on('click', '[data-action="drop"]', function () {
   const studentId = this.dataset.student, sectionId = this.dataset.section;
