@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#203d32">
+  <title>Registrar Workspace · Enrollment</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <div class="app">
+    <aside class="sidebar" aria-label="Primary navigation">
+      <div class="brand"><div class="brand-mark" aria-hidden="true">R<span>.</span></div><div><strong>REGISTRAR</strong><small>Office of Academic Records</small></div></div>
+      <nav aria-label="Workspace">
+        <p class="nav-label">Academic records</p>
+        <button class="nav-link active" data-page="overview" type="button" aria-current="page"><i class="ph ph-squares-four nav-icon" aria-hidden="true"></i><span>Overview</span><small>01</small></button>
+        <button class="nav-link" data-page="students" type="button"><i class="ph ph-student nav-icon" aria-hidden="true"></i><span>Students</span><small>02</small></button>
+        <button class="nav-link" data-page="sections" type="button"><i class="ph ph-books nav-icon" aria-hidden="true"></i><span>Sections</span><small>03</small></button>
+        <button class="nav-link" data-page="enroll" type="button"><i class="ph ph-arrows-left-right nav-icon" aria-hidden="true"></i><span>Enrollment</span><small>04</small></button>
+        <button class="nav-link" data-page="schedule" type="button"><i class="ph ph-calendar-dots nav-icon" aria-hidden="true"></i><span>Schedule</span><small>05</small></button>
+        <button class="nav-link" data-page="terms" type="button"><i class="ph ph-calendar-blank nav-icon" aria-hidden="true"></i><span>Academic terms</span><small>06</small></button>
+      </nav>
+      <div class="sidebar-foot"><span class="foot-rule"></span><strong>Local registry</strong><span>Records saved on this computer</span></div>
+    </aside>
+    <div class="workspace">
+      <header class="topbar"><div class="topbar-context"><span class="topbar-mark"></span><span>Active term <strong id="active-term-label">Opening…</strong></span></div><div class="top-actions"><span class="role">Local registry</span><span class="avatar" aria-hidden="true">R</span></div></header>
+      <main class="page" id="main" tabindex="-1"></main>
+    </div>
+  </div>
+  <div id="confirm-dialog" title="Confirm action"></div>
+  <div id="status" class="sr-only" role="status" aria-live="polite"></div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
