@@ -3,16 +3,23 @@ import assert from 'node:assert/strict';
 import { once } from 'node:events';
 import { startServer } from './http.js';
 
-test('API opens directly and preserves imported browser records', async () => {
+test('registrar access is protected and imported browser records are preserved', async () => {
   const server = startServer(0, ':memory:');
   try {
     await once(server, 'listening');
     const base = `http://127.0.0.1:${server.address().port}`;
-    const request = (path, method = 'GET', data) => fetch(base + path, {
+    let cookie = '';
+    const request = async (path, method = 'GET', data) => {
+      const response = await fetch(base + path, {
       method,
-      headers: { 'content-type': 'application/json', 'x-registrar-request': '1' },
+      headers: { 'content-type': 'application/json', 'x-registrar-request': '1', cookie },
       body: data === undefined ? undefined : JSON.stringify(data)
-    });
+      });
+      if (response.headers.get('set-cookie')) cookie = response.headers.get('set-cookie').split(';')[0];
+      return response;
+    };
+    assert.equal((await request('/api/data')).status, 401);
+    assert.equal((await request('/api/auth/setup', 'POST', { password: 'test-password' })).status, 200);
     assert.equal((await request('/api/data')).status, 200);
     const imported = await request('/api/import', 'POST', {
       students: [{ id: '26-00007', first: 'Lea', last: 'Cruz', email: 'lea@example.test', program: 'BS CS', level: '2nd year', admitted: '10/01/2026', status: 'Active' }],
@@ -27,12 +34,40 @@ test('API opens directly and preserves imported browser records', async () => {
   } finally { server.close(); }
 });
 
+test('public student registration is reviewed before enrollment', async () => {
+  const server = startServer(0, ':memory:');
+  try {
+    await once(server, 'listening');
+    const base = `http://127.0.0.1:${server.address().port}`;
+    let cookie = '';
+    const request = async (path, payload) => {
+      const response = await fetch(base + path, { method: 'POST', headers: { 'content-type': 'application/json', 'x-registrar-request': '1', cookie }, body: JSON.stringify(payload) });
+      if (response.headers.get('set-cookie')) cookie = response.headers.get('set-cookie').split(';')[0];
+      return response;
+    };
+    const person = { first: 'Nia', last: 'Tan', birth: '01/01/2008', gender: 'Female', address: 'Test address', phone: '0000000', email: 'nia@example.test', program: 'BS CS', level: '1st year', admitted: '10/01/2026', status: 'Active' };
+    const registration = await (await request('/api/public/register', person)).json();
+    assert.match(registration.id, /^\d{2}-\d{5}$/);
+    assert.equal((await request(`/api/students/${registration.id}/review`, {})).status, 401);
+    assert.equal((await request('/api/auth/setup', { password: 'test-password' })).status, 200);
+    assert.equal((await request(`/api/students/${registration.id}/review`, {})).status, 200);
+    const student = await (await request('/api/public/student', { id: registration.id, email: person.email, birth: person.birth })).json();
+    assert.equal(student.reviewed, true);
+  } finally { server.close(); }
+});
+
 test('parallel enrollment requests cannot exceed section capacity', async () => {
   const server = startServer(0, ':memory:');
   try {
     await once(server, 'listening');
     const base = `http://127.0.0.1:${server.address().port}`;
-    const request = (path, payload) => fetch(base + path, { method: 'POST', headers: { 'content-type': 'application/json', 'x-registrar-request': '1' }, body: JSON.stringify(payload) });
+    let cookie = '';
+    const request = async (path, payload) => {
+      const response = await fetch(base + path, { method: 'POST', headers: { 'content-type': 'application/json', 'x-registrar-request': '1', cookie }, body: JSON.stringify(payload) });
+      if (response.headers.get('set-cookie')) cookie = response.headers.get('set-cookie').split(';')[0];
+      return response;
+    };
+    assert.equal((await request('/api/auth/setup', { password: 'test-password' })).status, 200);
     const person = { birth: '01/01/2008', gender: 'Female', address: 'Test address', phone: '0000000', program: 'BS CS', level: '1st year', admitted: '10/01/2026', status: 'Active' };
     const students = await Promise.all([request('/api/students', { ...person, first: 'Ana', last: 'Lee', email: 'ana@example.test' }), request('/api/students', { ...person, first: 'Bea', last: 'Lee', email: 'bea@example.test' })]);
     const ids = await Promise.all(students.map(async response => (await response.json()).id));

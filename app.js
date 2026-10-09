@@ -38,6 +38,9 @@ let notice = '';
 let noticeType = '';
 let ready = false;
 let startupError = '';
+let auth = { configured: false, authenticated: false };
+let draftStudentId = '';
+let draftSections = [];
 
 function load() {
   try {
@@ -61,6 +64,8 @@ async function refreshData() {
 }
 async function bootstrap() {
   try {
+    auth = await api('/auth/status');
+    if (!auth.authenticated) { ready = true; render(); return; }
     let current = await api('/data');
     const saved = localStorage.getItem(STORE_KEY);
     if (saved && current.students.length === 0 && current.sections.length === 0) {
@@ -121,7 +126,7 @@ function heading(_context, title, subtitle, action = '') { return `<div class="p
 function empty(title, text) { return `<div class="empty"><strong>${esc(title)}</strong>${esc(text)}</div>`; }
 function badge(label) { const className = label === 'Active' ? '' : label === 'Inactive' ? 'muted' : label === 'Full' ? 'warning' : 'blue'; return `<span class="badge ${className}">${esc(label)}</span>`; }
 function capacity(section) { const used = count(section.id), pct = Math.min(100, Math.round(used / section.capacity * 100)); return `<div class="capacity"><div class="capacity-track"><div class="capacity-fill ${used >= section.capacity ? 'full' : ''}" style="width:${pct}%"></div></div><span>${used}/${section.capacity}</span></div>`; }
-function rowStudent(student) { return `<tr><td data-label="Student"><strong>${esc(fullName(student))}</strong><small>${esc(student.email)}</small></td><td data-label="Student ID"><span class="id-code">${esc(student.id)}</span></td><td data-label="Program">${esc(student.program)}</td><td data-label="Year level">${esc(student.level)}</td><td data-label="Status">${badge(student.status)}</td><td data-label="Record"><button class="text-button" data-action="student-detail" data-id="${esc(student.id)}" type="button">View record <i class="ph ph-arrow-right" aria-hidden="true"></i></button></td></tr>`; }
+function rowStudent(student) { return `<tr><td data-label="Student"><strong>${esc(fullName(student))}</strong><small>${esc(student.email)}</small></td><td data-label="Student ID"><span class="id-code">${esc(student.id)}</span></td><td data-label="Program">${esc(student.program)}</td><td data-label="Year level">${esc(student.level)}</td><td data-label="Status">${badge(student.reviewedAt ? student.status : 'Awaiting review')}</td><td data-label="Record"><button class="text-button" data-action="student-detail" data-id="${esc(student.id)}" type="button">View record <i class="ph ph-arrow-right" aria-hidden="true"></i></button></td></tr>`; }
 function rowSection(section) { return `<tr><td data-label="Subject"><strong>${esc(section.code)} · ${esc(section.section)}</strong><small>${esc(section.title)}</small></td><td data-label="Instructor">${esc(section.instructor)}</td><td data-label="Meeting">${esc(section.day)}<small>${esc(timeRange(section))}</small></td><td data-label="Room">${esc(section.room)}</td><td data-label="Seats">${capacity(section)}</td><td data-label="Status">${badge(count(section.id) >= section.capacity ? 'Full' : 'Open')}</td></tr>`; }
 
 function overview() {
@@ -198,6 +203,11 @@ function termsPage() {
 
 function render() {
   if (!ready) { $('#main').html('<div class="empty">Opening registry…</div>'); return; }
+  $('body').toggleClass('auth-screen', !auth.authenticated);
+  if (!auth.authenticated) {
+    $('#main').html(heading('', auth.configured ? 'Registrar sign in' : 'Set up registrar access', auth.configured ? 'Sign in to review student registrations and manage enrollment.' : 'Create a password for the registrar workspace on this computer.') + noticeHTML() + `<section class="panel form-panel"><form id="auth-form"><div class="field"><label for="registrar-password">Registrar password *</label><input id="registrar-password" name="password" type="password" minlength="8" maxlength="128" autocomplete="${auth.configured ? 'current-password' : 'new-password'}" required></div><div class="form-actions"><button class="button primary" type="submit">${auth.configured ? 'Sign in' : 'Set password and continue'}</button><a class="button" href="/student.html">Student registration</a></div></form></section>`);
+    return;
+  }
   if (startupError) { $('#main').html(`<div class="page-heading"><div><h1>Registry unavailable</h1><p class="subtitle">Start the local server with npm run dev, then reload this page.</p></div></div><div class="notice error" role="alert">${esc(startupError)}</div>`); return; }
   let html;
   if (page === 'overview') html = overview();
@@ -211,6 +221,13 @@ function render() {
   else if (page === 'schedule') html = schedule();
   else html = termsPage();
   $('#main').html(html);
+  if (page === 'enroll') {
+    $('#enroll-form button[type="submit"]').text('Add subject to enrollment list');
+    const draft = draftStudentId === selectedStudentId ? draftSections.map(sectionById).filter(Boolean) : [];
+    $('#main .dashboard-grid .panel:last').append(`<div class="panel-head" style="margin-top:22px"><div><h2>Enrollment list</h2><p class="panel-note">Review all subjects before saving.</p></div></div>${draft.length ? `<div class="section-list">${draft.map(section => `<div class="section-item"><div><strong>${esc(sectionLabel(section))}</strong><small>${esc(section.day)} · ${esc(timeRange(section))} · ${esc(section.room)}</small></div><button class="text-button" data-action="remove-draft" data-id="${esc(section.id)}" type="button">Remove</button></div>`).join('')}</div><div class="form-actions"><button class="button primary" data-action="confirm-draft" type="button">Review and confirm enrollment</button></div>` : empty('No subjects selected', 'Add an available section to the enrollment list.')}`);
+  }
+  $('.top-actions .role').text('Registrar signed in');
+  if (!$('#logout-button').length) $('.top-actions').append('<button id="logout-button" class="button small" type="button">Sign out</button>');
   $('#active-term-label').text(termLabel());
   $('.nav-link').removeClass('active').removeAttr('aria-current');
   const navPage = page.startsWith('student') ? 'students' : page.startsWith('section') ? 'sections' : page;
@@ -220,11 +237,31 @@ function render() {
   if (page === 'section-new') $('#section-form .form-grid').append(`<div class="field full"><label for="prerequisites">Prerequisite subject codes</label><input id="prerequisites" name="prerequisites" placeholder="e.g. CS 101, MATH 101"><span class="field-help">Separate codes with commas. Each subject must already exist.</span></div>`);
   if (page.startsWith('student:')) {
     const student = studentById(page.split(':')[1]);
+    if (!student.reviewedAt) $('#main > .page-heading').after(`<div class="notice" role="status">Registration awaiting registrar review. <button class="button small" data-action="review-student" data-id="${esc(student.id)}" type="button">Confirm registration for ${esc(fullName(student))}</button></div>`);
     const completed = (data.completed || []).filter(item => item.studentId === student.id).map(item => item.code);
     $('#main .panel:first').append(`<div class="detail-row"><span>Birth date</span><span>${esc(student.birth || 'Not recorded')}</span></div><div class="detail-row"><span>Gender</span><span>${esc(student.gender || 'Not recorded')}</span></div><div class="detail-row"><span>Address</span><span>${esc(student.address || 'Not recorded')}</span></div><div class="detail-row"><span>Contact number</span><span>${esc(student.phone || 'Not recorded')}</span></div><div class="detail-row"><span>Completed subjects</span><span>${esc(completed.join(', ') || 'None recorded')}</span></div><form id="completed-form" data-student="${esc(student.id)}" class="form-actions"><label for="completed-code">Record completed subject</label><input id="completed-code" name="code" placeholder="Subject code" required><button class="button" type="submit">Record completion</button></form>`);
   }
-  if (page === 'enroll') $('#enroll-student').autocomplete({ minLength: 0, source: data.students.filter(student => student.status === 'Active').map(student => ({ label: `${fullName(student)} (${student.id})`, value: `${fullName(student)} (${student.id})`, id: student.id })), select: (_event, ui) => { selectedStudentId = ui.item.id; setTimeout(render, 0); } });
+  if (page === 'enroll') $('#enroll-student').autocomplete({ minLength: 0, source: data.students.filter(student => student.status === 'Active' && student.reviewedAt).map(student => ({ label: `${fullName(student)} (${student.id})`, value: `${fullName(student)} (${student.id})`, id: student.id })), select: (_event, ui) => { selectedStudentId = ui.item.id; if (draftStudentId !== ui.item.id) { draftStudentId = ui.item.id; draftSections = []; } setTimeout(render, 0); } });
 }
+
+$(document).on('submit', '#auth-form', async function (event) {
+  event.preventDefault();
+  try {
+    await api(auth.configured ? '/auth/login' : '/auth/setup', 'POST', { password: this.elements.password.value });
+    auth = { configured: true, authenticated: true };
+    await bootstrap();
+  } catch (error) { alertUser(error.message, 'error'); }
+});
+$(document).on('click', '#logout-button', async function () {
+  await api('/auth/logout', 'POST');
+  auth.authenticated = false;
+  data = { students: [], sections: [], enrollments: [] };
+  render();
+});
+$(document).on('click', '[data-action="review-student"]', async function () {
+  try { await api(`/students/${encodeURIComponent(this.dataset.id)}/review`, 'POST'); await refreshData(); alertUser('Student registration reviewed and confirmed.'); }
+  catch (error) { alertUser(error.message, 'error'); }
+});
 
 $(document).on('click', '[data-page]', function () {
   page = this.dataset.page;
@@ -282,14 +319,32 @@ $(document).on('submit', '#enroll-form', async function (event) {
   event.preventDefault(); const fields = Object.fromEntries(new FormData(this));
   const student = data.students.find(item => `${fullName(item)} (${item.id})` === fields.student.trim() || item.id === fields.student.trim());
   const section = sectionById(fields.sectionId);
-  if (!student || student.status !== 'Active') { alertUser('Choose an active student from the suggestions.', 'error'); return; }
+  if (!student || student.status !== 'Active' || !student.reviewedAt) { alertUser('Choose an active student whose registration has been reviewed.', 'error'); return; }
   selectedStudentId = student.id;
+  if (draftStudentId !== student.id) { draftStudentId = student.id; draftSections = []; }
   if (!section) { alertUser('Choose a section.', 'error'); return; }
-  const prerequisites = section.prerequisites || 'None';
-  $('#confirm-dialog').html(`<p>Review enrollment for <strong>${esc(fullName(student))}</strong> (${esc(student.id)}).</p><p><strong>${esc(sectionLabel(section))}</strong><br>${esc(section.day)} · ${esc(timeRange(section))} · ${esc(section.room)}<br>Instructor: ${esc(section.instructor)}<br>Seats: ${count(section.id)}/${section.capacity}<br>Prerequisites: ${esc(prerequisites)}</p>`).dialog({ modal: true, resizable: false, width: Math.min(460, window.innerWidth - 30), buttons: [
-    { text: 'Change selection', click() { $(this).dialog('close'); } },
+  if (count(section.id) >= section.capacity) { alertUser('This section is full. Choose another section.', 'error'); return; }
+  if (draftSections.includes(section.id) || enrolled(student.id).some(item => item.id === section.id)) { alertUser('This section is already in the enrollment list or schedule.', 'error'); return; }
+  const completed = (data.completed || []).filter(item => item.studentId === student.id).map(item => item.code);
+  const missing = (section.prerequisites || '').split(',').map(code => code.trim()).filter(code => code && !completed.includes(code));
+  if (missing.length) { alertUser(`Prerequisite not completed: ${missing.join(', ')}. Choose another subject.`, 'error'); return; }
+  const conflict = [...enrolled(student.id), ...draftSections.map(sectionById).filter(Boolean)].some(item => item.day === section.day && item.start < section.end && section.start < item.end);
+  if (conflict) { alertUser('Schedule conflict. Choose a different date or time.', 'error'); return; }
+  draftSections.push(section.id);
+  alertUser(`${section.code} · ${section.section} added to the enrollment list.`);
+});
+$(document).on('click', '[data-action="remove-draft"]', function () {
+  draftSections = draftSections.filter(id => id !== this.dataset.id);
+  render();
+});
+$(document).on('click', '[data-action="confirm-draft"]', function () {
+  const student = studentById(draftStudentId);
+  const sections = draftSections.map(sectionById).filter(Boolean);
+  if (!student || !sections.length) return;
+  $('#confirm-dialog').html(`<p>Confirm enrollment for <strong>${esc(fullName(student))}</strong> (${esc(student.id)})?</p><ul>${sections.map(section => `<li>${esc(sectionLabel(section))} — ${esc(section.day)}, ${esc(timeRange(section))}, ${esc(section.room)}; ${count(section.id)}/${section.capacity} seats filled</li>`).join('')}</ul><p>The server will check prerequisites, conflicts, and capacity again before saving.</p>`).dialog({ modal: true, resizable: false, width: Math.min(560, window.innerWidth - 30), buttons: [
+    { text: 'Change list', click() { $(this).dialog('close'); } },
     { text: 'Confirm enrollment', async click() {
-      try { await api('/enrollments', 'POST', { studentId: student.id, sectionId: section.id }); await refreshData(); $(this).dialog('close'); page = 'schedule'; alertUser(`${fullName(student)} was enrolled in ${section.code} · ${section.section}.`); }
+      try { await api('/enrollments/confirm', 'POST', { studentId: student.id, sectionIds: sections.map(section => section.id) }); await refreshData(); draftSections = []; $(this).dialog('close'); page = 'schedule'; alertUser(`Enrollment confirmed for ${fullName(student)}.`); }
       catch (error) { $(this).dialog('close'); alertUser(error.message, 'error'); }
     } }
   ] });

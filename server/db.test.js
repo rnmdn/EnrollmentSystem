@@ -59,3 +59,21 @@ test('registration reuses existing identity and prerequisites gate allocation', 
     assert.equal(store.list().enrollments.length, 1);
   } finally { store.close(); }
 });
+
+test('student registration waits for registrar review and batch enrollment is atomic', () => {
+  const store = openStore(':memory:');
+  try {
+    const person = { first: 'Jo', last: 'Cruz', birth: '01/01/2008', gender: 'Female', address: 'Test address', phone: '0000000', email: 'jo@example.test', program: 'BS CS', level: '1st year', admitted: '10/01/2026', status: 'Active' };
+    const registration = store.registerStudent(person);
+    assert.equal(registration.reviewedAt, null);
+    assert.equal(store.registerStudent(person).id, registration.id);
+    const open = store.addSection({ code: 'CS 101', title: 'Computing', section: 'A', instructor: 'Prof. A', day: 'Monday', start: '09:00', end: '10:00', room: 'R1', capacity: 2 }, null);
+    const clash = store.addSection({ code: 'CS 102', title: 'Programming', section: 'A', instructor: 'Prof. B', day: 'Monday', start: '09:30', end: '10:30', room: 'R2', capacity: 2 }, null);
+    assert.throws(() => store.allocate(registration.id, open.id, null), /Review this student registration/);
+    store.reviewStudent(registration.id);
+    assert.throws(() => store.allocateMany(registration.id, [open.id, clash.id], null), /conflicts/);
+    assert.equal(store.list().enrollments.length, 0);
+    store.allocateMany(registration.id, [open.id], null);
+    assert.equal(store.studentStatus(registration.id, person.email, person.birth).classes.length, 1);
+  } finally { store.close(); }
+});

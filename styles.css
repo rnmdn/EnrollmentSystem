@@ -28,6 +28,13 @@ a { color: inherit; }
 .skip-link:focus { top: 12px; }
 
 .app { display: flex; min-height: 100dvh; max-width: 100%; }
+.auth-screen .sidebar, .auth-screen .topbar { display: none; }
+.auth-screen .workspace { display: grid; place-items: center; }
+.auth-screen .page { width: min(620px, 100%); }
+.auth-screen .form-panel { margin-top: 20px; }
+.student-portal { width: min(900px, 100%); margin: 0 auto; padding: 42px 20px 90px; }
+.student-portal header { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding-bottom: 30px; border-bottom: 1px solid var(--line); }
+.student-portal .page-heading { margin-top: 38px; }
 .sidebar { width: 250px; flex: none; display: flex; flex-direction: column; min-height: 100dvh; padding: 30px 19px 25px; background: var(--ink); color: #e9eee6; }
 .brand { display: flex; align-items: center; gap: 11px; padding: 2px 6px 65px; }
 .brand-mark { width: 46px; height: 46px; display: grid; place-items: center; border: 1px solid #91a890; font-family: 'Newsreader Variable', Georgia, serif; font-weight: 500; font-size: 31px; line-height: 1; letter-spacing: -.06em; color: #fffdf3; }

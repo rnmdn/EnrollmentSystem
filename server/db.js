@@ -76,6 +76,14 @@ export function openStore(path) {
     PRAGMA user_version = 3;
     COMMIT;
   `);
+  if (db.prepare('PRAGMA user_version').get().user_version === 3) db.exec(`
+    BEGIN;
+    ALTER TABLE students ADD COLUMN reviewed_at TEXT;
+    UPDATE students SET reviewed_at = CURRENT_TIMESTAMP;
+    CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+    PRAGMA user_version = 4;
+    COMMIT;
+  `);
 
   function activeTerm() {
     return db.prepare('SELECT id, label FROM terms WHERE active = 1 LIMIT 1').get();
@@ -94,7 +102,7 @@ export function openStore(path) {
     const terms = db.prepare(`SELECT terms.id, terms.label, terms.active, COUNT(DISTINCT sections.id) AS sections, COUNT(enrollments.student_id) AS enrollments
       FROM terms LEFT JOIN sections ON sections.term_id = terms.id LEFT JOIN enrollments ON enrollments.section_id = sections.id
       GROUP BY terms.id ORDER BY terms.id DESC`).all();
-    const students = db.prepare('SELECT number AS id, first, last, birth, gender, address, phone, email, program, level, admitted, status FROM students ORDER BY id').all();
+    const students = db.prepare('SELECT number AS id, first, last, birth, gender, address, phone, email, program, level, admitted, status, reviewed_at AS reviewedAt FROM students ORDER BY id').all();
     const sections = db.prepare(`SELECT sections.public_id AS id, subjects.code, subjects.title, sections.label AS section, sections.instructor, sections.day, sections.start, sections.end, sections.room, sections.capacity, COALESCE((SELECT group_concat(prereq.code, ', ') FROM subject_prerequisites JOIN subjects prereq ON prereq.id = subject_prerequisites.prerequisite_id WHERE subject_prerequisites.subject_id = subjects.id), '') AS prerequisites FROM sections JOIN subjects ON subjects.id = sections.subject_id WHERE sections.term_id = ? ORDER BY sections.id`).all(term.id);
     const enrollments = db.prepare('SELECT students.number AS studentId, sections.public_id AS sectionId FROM enrollments JOIN students ON students.id = enrollments.student_id JOIN sections ON sections.id = enrollments.section_id WHERE sections.term_id = ? ORDER BY enrollments.created_at').all(term.id);
     const completed = db.prepare('SELECT students.number AS studentId, subjects.code FROM completed_subjects JOIN students ON students.id = completed_subjects.student_id JOIN subjects ON subjects.id = completed_subjects.subject_id').all();
@@ -134,10 +142,37 @@ export function openStore(path) {
       const max = db.prepare("SELECT MAX(CAST(SUBSTR(number, 4) AS INTEGER)) AS value FROM students WHERE number LIKE ?").get(`${year}-%`).value || 0;
       if (max >= 99999) failure(`Student number sequence for ${year} is full.`, 409);
       const number = `${year}-${String(max + 1).padStart(5, '0')}`;
-      db.prepare('INSERT INTO students (number, first, last, birth, gender, address, phone, email, program, level, admitted, status, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(number, student.first, student.last, student.birth, student.gender, student.address, student.phone, student.email, student.program, student.level, student.admitted, student.status, actor);
+      db.prepare('INSERT INTO students (number, first, last, birth, gender, address, phone, email, program, level, admitted, status, created_by, reviewed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(number, student.first, student.last, student.birth, student.gender, student.address, student.phone, student.email, student.program, student.level, student.admitted, student.status, actor, actor === 'student' ? null : new Date().toISOString());
       audit(actor, 'create', 'student', number);
       return { id: number, ...student };
     });
+  }
+  function registerStudent(input) {
+    const student = validateStudent(input);
+    const existing = db.prepare('SELECT number AS id, reviewed_at AS reviewedAt FROM students WHERE email = ? AND birth = ?').get(student.email, student.birth);
+    if (existing) return { ...existing, existing: true };
+    const possible = db.prepare('SELECT 1 FROM students WHERE email = ? OR (lower(first) = lower(?) AND lower(last) = lower(?) AND birth = ?)').get(student.email, student.first, student.last, student.birth);
+    if (possible) failure('A possible existing record needs registrar review.', 409);
+    return { ...addStudent(student, 'student'), existing: false, reviewedAt: null };
+  }
+  function reviewStudent(number) {
+    return transaction(() => {
+      const result = db.prepare('UPDATE students SET reviewed_at = CURRENT_TIMESTAMP WHERE number = ? AND reviewed_at IS NULL').run(number);
+      if (!result.changes) failure('Pending registration was not found.', 404);
+      audit(null, 'review', 'student', number);
+      return { id: number, reviewed: true };
+    });
+  }
+  function studentStatus(number, email, birth) {
+    const student = db.prepare('SELECT id, number, first, last, email, birth, reviewed_at FROM students WHERE number = ? AND email = ? AND birth = ?').get(number, String(email || '').trim().toLowerCase(), birth);
+    if (!student) failure('Student record was not found with those details.', 404);
+    const classes = db.prepare('SELECT subjects.code, subjects.title, sections.label AS section, sections.day, sections.start, sections.end, sections.room, sections.instructor FROM enrollments JOIN sections ON sections.id = enrollments.section_id JOIN subjects ON subjects.id = sections.subject_id WHERE enrollments.student_id = ? AND sections.term_id = ? ORDER BY sections.day, sections.start').all(student.id, activeTerm().id);
+    return { id: student.number, name: `${student.first} ${student.last}`, reviewed: Boolean(student.reviewed_at), term: activeTerm().label, classes };
+  }
+  function registrarPassword() { return db.prepare("SELECT value FROM settings WHERE key = 'registrar_password'").get()?.value || null; }
+  function setRegistrarPassword(value) {
+    if (registrarPassword()) failure('Registrar password is already configured.', 409);
+    db.prepare("INSERT INTO settings (key, value) VALUES ('registrar_password', ?)").run(value);
   }
   function updateStudent(number, input, actor) {
     const student = validateStudent(input);
@@ -175,8 +210,9 @@ export function openStore(path) {
     });
   }
   function insertAllocation(studentNumber, sectionPublicId, actor) {
-      const student = db.prepare('SELECT id, status FROM students WHERE number = ?').get(studentNumber);
+      const student = db.prepare('SELECT id, status, reviewed_at FROM students WHERE number = ?').get(studentNumber);
       if (!student || student.status !== 'Active') failure('Choose an active student.', 400);
+      if (!student.reviewed_at) failure('Review this student registration before enrollment.', 409);
       const section = db.prepare('SELECT id, term_id, day, start, end, capacity FROM sections WHERE public_id = ?').get(sectionPublicId);
       if (!section) failure('Choose a section.', 404);
       if (section.term_id !== activeTerm().id) failure('Choose a section in the active term.', 409);
@@ -192,6 +228,10 @@ export function openStore(path) {
       return { studentId: studentNumber, sectionId: sectionPublicId };
   }
   function allocate(studentNumber, sectionPublicId, actor) { return transaction(() => insertAllocation(studentNumber, sectionPublicId, actor)); }
+  function allocateMany(studentNumber, sectionIds, actor) {
+    if (!Array.isArray(sectionIds) || sectionIds.length < 1 || sectionIds.length > 12 || new Set(sectionIds).size !== sectionIds.length) failure('Choose 1 to 12 distinct sections.');
+    return transaction(() => sectionIds.map(sectionId => insertAllocation(studentNumber, sectionId, actor)));
+  }
   function completeSubject(studentNumber, code, actor) {
     return transaction(() => {
       const student = db.prepare('SELECT id FROM students WHERE number = ?').get(studentNumber);
@@ -216,7 +256,7 @@ export function openStore(path) {
       for (const item of input.students) {
         const student = validateStudent({ birth: item.birth || item.admitted, gender: item.gender || 'Unspecified', address: item.address || 'Legacy record', phone: item.phone || 'Not recorded', ...item });
         if (!/^\d{2}-\d{5}$/.test(item.id)) failure('A student number in browser data is invalid.');
-        db.prepare('INSERT INTO students (number, first, last, birth, gender, address, phone, email, program, level, admitted, status, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(item.id, student.first, student.last, student.birth, student.gender, student.address, student.phone, student.email, student.program, student.level, student.admitted, student.status, actor);
+        db.prepare('INSERT INTO students (number, first, last, birth, gender, address, phone, email, program, level, admitted, status, created_by, reviewed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)').run(item.id, student.first, student.last, student.birth, student.gender, student.address, student.phone, student.email, student.program, student.level, student.admitted, student.status, actor);
       }
       for (const item of input.sections) {
         const section = validateSection(item);
@@ -231,5 +271,5 @@ export function openStore(path) {
       return { imported: true };
     });
   }
-  return { close: () => db.close(), list, createTerm, activateTerm, addStudent, updateStudent, addSection, allocate, completeSubject, drop, importData };
+  return { close: () => db.close(), list, createTerm, activateTerm, addStudent, registerStudent, reviewStudent, studentStatus, registrarPassword, setRegistrarPassword, updateStudent, addSection, allocate, allocateMany, completeSubject, drop, importData };
 }

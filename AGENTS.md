@@ -2,18 +2,18 @@
 
 ## Project goal
 
-Build a web application for student master records, course and subject scheduling, section allocation, and permanent student ID generation. The local workflow should register a student, create a section, enroll the student, and show the resulting schedule without account creation or sign-in.
+Build a web application for student master records, course and subject scheduling, section allocation, and permanent student ID generation. The local workflow lets a student register without an account, then lets a registrar sign in, review the registration, create sections, confirm enrollment, and let the student view the resulting schedule.
 
 ## Current architecture
 
 - Use the Node 24 HTTP server and built-in SQLite database in `server/` for the current local application. The frontend is Vite, vanilla JavaScript, and jQuery UI. The original Laravel/PostgreSQL recommendation remains a deployment option, not the current stack.
 - The database owns student number generation, records, and allocation checks. Do not restore browser-only writes.
-- Keep the server bound to localhost until deployment security, backups, and school-specific privacy requirements are defined.
+- Keep the server bound to localhost until deployment security, backups, and school-specific privacy requirements are defined. Registrar pages and record APIs require a password-backed session; public student routes expose only registration and limited status lookup.
 - Keep student identity separate from term enrollments. A student keeps one student ID across terms and section changes. Academic terms are stored in the database; the active term controls section and allocation views.
 - Format student numbers as `YY-00001`: the two-digit calendar year when the record is created, followed by a five-digit sequence that resets each year. Existing numbers never change at a year boundary.
 - Model students, subjects, academic terms, sections, and enrollments as separate entities with foreign keys and appropriate unique constraints. Current sections have one meeting time each; expand this only when multiple meetings are required.
 - Enforce enrollment rules on the server: section capacity, duplicate enrollment, and student schedule conflicts. UI checks may improve feedback but cannot replace server validation.
-- Open the local application directly without account creation or sign-in. Keep it bound to localhost; revisit access controls if it is deployed to a shared server.
+- Students can register without an account. The registrar sets a password on first use and signs in to review registrations and manage records. Keep the app bound to localhost; further identity verification and access controls are required before deployment to a shared server.
 
 ## jQuery UI requirement
 
