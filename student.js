@@ -3,6 +3,7 @@ import '@fontsource-variable/outfit';
 import '@fontsource-variable/newsreader';
 import 'jquery-ui-dist/jquery-ui.css';
 import './styles.css';
+import './ui-refresh.css';
 window.jQuery = window.$ = $;
 await import('jquery-ui-dist/jquery-ui.js');
 
@@ -10,6 +11,7 @@ const content = $('#student-content');
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const field = (label, name, type = 'text', extra = '') => `<div class="field"><label for="${name}">${label} *</label><input id="${name}" name="${name}" type="${type}" ${extra} required></div>`;
 const notice = (message, error = false) => `<div class="notice ${error ? 'error' : ''}" role="alert">${esc(message)}</div>`;
+const story = (title, description) => `<aside class="student-story"><div class="story-mark" aria-hidden="true"></div><h1>${esc(title)}</h1><p>${esc(description)}</p><ol class="student-steps"><li><strong>Register</strong><span>Enter your student details once.</span></li><li><strong>Registrar review</strong><span>Your record is checked before enrollment.</span></li><li><strong>View schedule</strong><span>Return to see confirmed subjects and times.</span></li></ol></aside>`;
 
 async function api(path, payload) {
   const response = await fetch(`/api/public/${path}`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-registrar-request': '1' }, body: JSON.stringify(payload) });
@@ -19,7 +21,7 @@ async function api(path, payload) {
 }
 
 function registration() {
-  content.html(`<div class="page-heading"><div><h1>Start registration</h1><p class="subtitle">Enter your information. The registrar will review your record before section enrollment.</p></div></div><section class="panel form-panel"><div class="panel-head"><div><h2>Student information</h2><p class="panel-note">Fields marked * are required.</p></div></div><form id="registration-form"><div class="form-grid">
+  content.html(`<div class="student-layout">${story('Your enrollment starts here.', 'A clear first step toward your next academic term. Complete your information, then let the registrar handle the section checks.')}<section class="panel form-panel"><div class="panel-head"><div><h2>Student information</h2><p class="panel-note">Fields marked * are required. Your student ID is created after you submit.</p></div></div><form id="registration-form"><div class="form-grid">
     ${field('First name', 'first', 'text', 'maxlength="60" autocomplete="given-name"')}
     ${field('Last name', 'last', 'text', 'maxlength="60" autocomplete="family-name"')}
     ${field('Birth date', 'birth', 'text', 'placeholder="MM/DD/YYYY"')}
@@ -30,12 +32,12 @@ function registration() {
     <div class="field"><label for="program">Program / course *</label><select id="program" name="program" required><option value="">Choose a program</option>${['BS Computer Science','BS Information Technology','BS Business Administration','BS Accountancy','BA Communication'].map(value => `<option>${esc(value)}</option>`).join('')}</select></div>
     <div class="field"><label for="level">Year level *</label><select id="level" name="level" required>${['1st year','2nd year','3rd year','4th year'].map(value => `<option>${esc(value)}</option>`).join('')}</select></div>
     ${field('Admission date', 'admitted', 'text', 'placeholder="MM/DD/YYYY"')}
-    </div><div class="form-actions"><button class="button primary" type="submit">Submit registration</button><button class="button" id="show-status" type="button">Check existing registration</button></div></form></section>`);
+    </div><div class="form-actions"><button class="button primary" type="submit">Submit registration</button><button class="button" id="show-status" type="button">Check existing registration</button></div></form></section></div>`);
   $('#birth, #admitted').datepicker({ dateFormat: 'mm/dd/yy', changeMonth: true, changeYear: true, yearRange: '1950:+0', maxDate: 0 });
 }
 
 function statusForm(message = '') {
-  content.html(`<div class="page-heading"><div><h1>Check registration</h1><p class="subtitle">Use the student ID and details entered during registration.</p></div></div>${message ? notice(message) : ''}<section class="panel form-panel"><form id="status-form"><div class="form-grid">${field('Student ID', 'student-id', 'text', 'placeholder="YY-00001"')}${field('Email address', 'status-email', 'email')}${field('Birth date', 'status-birth', 'text', 'placeholder="MM/DD/YYYY"')}</div><div class="form-actions"><button class="button primary" type="submit">View registration and schedule</button><button class="button" id="show-registration" type="button">Start registration</button></div></form></section>`);
+  content.html(`<div class="student-layout">${story('See what comes next.', 'Return with your student ID to check your registration and the sections confirmed for this term.')}<section class="panel form-panel"><div class="panel-head"><div><h2>Check registration</h2><p class="panel-note">Use the same email and birth date you entered earlier.</p></div></div>${message ? notice(message) : ''}<form id="status-form"><div class="form-grid">${field('Student ID', 'student-id', 'text', 'placeholder="YY-00001"')}${field('Email address', 'status-email', 'email')}${field('Birth date', 'status-birth', 'text', 'placeholder="MM/DD/YYYY"')}</div><div class="form-actions"><button class="button primary" type="submit">View registration and schedule</button><button class="button" id="show-registration" type="button">Start registration</button></div></form></section></div>`);
   $('#status-birth').datepicker({ dateFormat: 'mm/dd/yy', changeMonth: true, changeYear: true, yearRange: '1950:+0', maxDate: 0 });
 }
 
