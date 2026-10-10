@@ -117,6 +117,11 @@ input::placeholder { color: #64796b; opacity: 1; }
 .student-portal .brand { padding: 0; color: var(--ink); }
 .student-portal .brand-mark { width: 43px; height: 43px; border-color: var(--ink); color: var(--ink); }
 .student-portal .brand small { color: #5e7563; }
+.student-header-actions { display: flex; flex-wrap: wrap; gap: 9px; justify-content: flex-end; }
+.demo-notice { margin-bottom: 22px; }
+.demo-notice + .page-heading { margin-top: 0; }
+.auth-screen .demo-notice { display: none; }
+.page form :disabled { cursor: not-allowed; opacity: .58; }
 .student-layout { display: grid; grid-template-columns: minmax(340px, .84fr) minmax(0, 1.16fr); align-items: stretch; gap: 0; margin-top: 34px; }
 .student-story { position: relative; min-height: 710px; display: flex; flex-direction: column; padding: clamp(36px, 4vw, 66px); overflow: hidden; background: #193d2e; color: #edf4e9; }
 .student-story::after { content: ''; position: absolute; inset: auto -17% -31% 14%; height: 330px; border: 1px solid rgba(218,232,204,.24); border-radius: 50%; transform: rotate(-17deg); pointer-events: none; }
@@ -170,6 +175,8 @@ input::placeholder { color: #64796b; opacity: 1; }
   .record-table td::before { font-size: 11px; }
   .student-portal { padding: 14px 16px 60px; }
   .student-portal header { gap: 10px; }
+  .student-header-actions { width: 100%; justify-content: stretch; }
+  .student-header-actions .button { flex: 1; text-align: center; }
   .student-portal header .button { font-size: 12px; padding: 8px 10px; }
   .student-portal .brand-mark { width: 36px; height: 36px; font-size: 24px; }
   .student-portal .brand strong { font-size: 11px; }

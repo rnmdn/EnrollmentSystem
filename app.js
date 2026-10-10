@@ -10,6 +10,7 @@ window.jQuery = window.$ = $;
 await import('jquery-ui-dist/jquery-ui.js');
 
 const STORE_KEY = 'registrar-workspace-v1';
+const demo = new URLSearchParams(location.search).has('demo');
 const seed = {
   students: [
     { id: '26-00001', first: 'Maya', last: 'Santos', email: 'maya.santos@example.test', program: 'BS Computer Science', level: '2nd year', admitted: '08/12/2025', status: 'Active' },
@@ -31,7 +32,14 @@ const seed = {
   ]
 };
 
-let data = load();
+const demoData = {
+  ...structuredClone(seed),
+  students: seed.students.map(student => ({ ...student, reviewedAt: '2026-08-01' })),
+  term: { id: '2026-1', label: '2026–2027 · Semester 1' },
+  terms: [{ id: '2026-1', label: '2026–2027 · Semester 1', active: true, sections: 4, enrollments: 4 }],
+  completed: []
+};
+let data = demo ? demoData : load();
 let page = 'overview';
 let query = '';
 let filter = 'All';
@@ -55,6 +63,7 @@ function load() {
   return structuredClone(seed);
 }
 async function api(path, method = 'GET', payload) {
+  if (demo) throw new Error('The demo is read-only. Sign in as registrar to save changes.');
   const response = await fetch(`/api${path}`, { method, headers: { 'content-type': 'application/json', 'x-registrar-request': '1' }, body: payload === undefined ? undefined : JSON.stringify(payload) });
   const result = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(result.error || `Request failed (${response.status}).`);
@@ -65,6 +74,7 @@ async function refreshData() {
   if (!data.students.some(student => student.id === selectedStudentId)) selectedStudentId = data.students[0]?.id || '';
 }
 async function bootstrap() {
+  if (demo) { auth = { configured: true, authenticated: true }; ready = true; render(); return; }
   try {
     auth = await api('/auth/status');
     if (!auth.authenticated) { ready = true; render(); return; }
@@ -228,8 +238,18 @@ function render() {
     const draft = draftStudentId === selectedStudentId ? draftSections.map(sectionById).filter(Boolean) : [];
     $('#main .dashboard-grid .panel:last').append(`<div class="panel-head" style="margin-top:22px"><div><h2>Enrollment list</h2><p class="panel-note">Review all subjects before saving.</p></div></div>${draft.length ? `<div class="section-list">${draft.map(section => `<div class="section-item"><div><strong>${esc(sectionLabel(section))}</strong><small>${esc(section.day)} · ${esc(timeRange(section))} · ${esc(section.room)}</small></div><button class="text-button" data-action="remove-draft" data-id="${esc(section.id)}" type="button">Remove</button></div>`).join('')}</div><div class="form-actions"><button class="button primary" data-action="confirm-draft" type="button">Review and confirm enrollment</button></div>` : empty('No subjects selected', 'Add an available section to the enrollment list.')}`);
   }
-  $('.top-actions .role').text('Registrar signed in');
-  if (!$('#logout-button').length) $('.top-actions').append('<button id="logout-button" class="button small" type="button">Sign out</button>');
+  $('.top-actions .role').text(demo ? 'Sample data · read-only' : 'Registrar signed in');
+  if (demo) {
+    $('#logout-button').remove();
+    if (!$('#exit-demo').length) $('.top-actions').append('<a id="exit-demo" class="button small" href="/student.html">Exit preview</a>');
+    $('#main').prepend('<div class="notice demo-notice" role="status">Demo preview with fictional records. Browse every page; saving is disabled.</div>');
+    $('#main form').find('input, select, button').prop('disabled', true);
+    $('#main [data-action="review-student"], #main [data-action="drop"], #main [data-action="activate-term"], #main [data-action="confirm-draft"]').prop('disabled', true);
+    $('#student-search, #section-search, #student-filter, #schedule-student').prop('disabled', false);
+  } else {
+    $('#exit-demo').remove();
+    if (!$('#logout-button').length) $('.top-actions').append('<button id="logout-button" class="button small" type="button">Sign out</button>');
+  }
   $('#active-term-label').text(termLabel());
   $('.nav-link').removeClass('active').removeAttr('aria-current');
   const navPage = page.startsWith('student') ? 'students' : page.startsWith('section') ? 'sections' : page;
