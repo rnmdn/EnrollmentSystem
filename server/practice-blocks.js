@@ -25,7 +25,7 @@ export async function seedBlockPractice(store) {
   const curriculum=plpCurriculum2022.subjects.filter(row=>row.program===program);
   const blocks=[];
   for (let year=1;year<=4;year++) for (const group of ['A','B','C','D']) {
-    const block=store.createBlock({program,groupCode:group,cohortYear:2027-year,capacity:40},registrar);
+    const block=store.createBlock({program,groupCode:group,cohortYear:2027-year,capacity:30},registrar);
     const term=store.createBlockTerm({blockId:block.id,yearLevel:year,source:plpCurriculum2022.version},registrar);
     blocks.push({year,group,block,term});
   }
@@ -47,7 +47,7 @@ export async function seedBlockPractice(store) {
     const results=prior.map(subject=>subject.code===failed?{code:subject.code,grade:'5.00'}:blocked.has(subject.code)?{code:subject.code,remark:'not_taken'}:{code:subject.code,grade:'2.00'});
     if(results.length) store.recordResults(student.id,results,registrar);
     store.setStudentPassword(student.id,studentHash);
-    store.assignHomeBlock(student.id,{blockId:row.block.id},registrar);
+    if (row.position<=10 || (row.position>=25 && row.position<=29)) store.assignHomeBlock(student.id,{blockId:row.block.id},registrar);
   }
   const time=hour=>String(hour).padStart(2,'0')+':00';
   for(const room of practiceRooms) store.addResource({kind:'room',name:room,capacity:40},registrar);
@@ -56,13 +56,13 @@ export async function seedBlockPractice(store) {
     for(const [index,subject] of subjects.entries()) {
       const room=practiceClassRoom(row.year,subject.code),instructor=practiceProfessor(row.year,index);
       if(row.group==='A') store.addResource({kind:'professor',name:instructor},registrar);
-      store.addBlockClass(row.term.id,{code:subject.code,day:['Monday','Tuesday','Wednesday','Thursday'][row.group.charCodeAt(0)-65],start:time(8+index),end:time(9+index),room,instructor,capacity:40},registrar);
+      store.addBlockClass(row.term.id,{code:subject.code,day:['Monday','Tuesday','Wednesday','Thursday'][row.group.charCodeAt(0)-65],start:time(8+index),end:time(9+index),room,instructor,capacity:30},registrar);
     }
   }
   for(const [index,code] of ['COMP 103','IT 104','IT 111'].entries()) {
     const subject=curriculum.find(row=>row.code===code),room=`Lab ${index+1}`,instructor=retakeProfessor(index);
     store.addResource({kind:'professor',name:instructor},registrar);
-    store.addSection({...subject,section:'Retake',day:'Friday',start:time(8+index),end:time(9+index),room,instructor,capacity:40},registrar);
+    store.addSection({...subject,section:'Retake',day:'Friday',start:time(8+index),end:time(9+index),room,instructor,capacity:30},registrar);
   }
   return {seeded:true,students:480};
 }

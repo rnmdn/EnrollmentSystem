@@ -92,12 +92,12 @@ test('student notification identifies subjects blocked by a failed prerequisite 
     assert.deepEqual(store.studentView(student.id).backSubjects.blocked,[]);
   } finally {store.close();}
 });
-test('expanded practice has 30 learners in each 1A–4D block, usable regular and irregular workflows, and preserves progress',async()=>{
+test('expanded practice has 15 of 30 places used in each 1A–4D block, usable regular and irregular workflows, and preserves progress',async()=>{
   const store=openStore(':memory:');
   try {
     assert.equal((await seedBlockPractice(store)).students,480);
     const data=store.list(registrar);
-    assert.equal(data.blocks.length,16);assert.ok(data.blocks.every(row=>row.members===30));
+    assert.equal(data.blocks.length,16);assert.ok(data.blocks.every(row=>row.members===15 && row.capacity===30));
     assert.equal(data.blockTerms.length,16);assert.equal(data.sections.length,103);
     const rooms=data.resources.filter(row=>row.kind==='room').map(row=>row.name);
     assert.equal(rooms.length,14);
@@ -107,10 +107,11 @@ test('expanded practice has 30 learners in each 1A–4D block, usable regular an
     assert.equal(data.students.filter(row=>row.studentType==='back_subject').length,64);
     assert.equal(data.students.filter(row=>row.studentType==='transferee').length,16);
     assert.equal(data.students.filter(row=>row.studentType==='returning').length,16);
-    assert.ok(data.students.every(row=>row.email.endsWith('@example.test') && row.homeBlock));
+    assert.ok(data.students.every(row=>row.email.endsWith('@example.test')));
+    assert.equal(data.students.filter(row=>row.homeBlock).length,240);
     // All regular year levels must be enrollable with the supplied curriculum and standing rules.
     for(let year=1;year<=4;year++) {
-      const student=data.students.find(row=>row.homeBlock.label===`BSIT ${year}A` && row.studentType==='regular');
+      const student=data.students.find(row=>row.homeBlock?.label===`BSIT ${year}A` && row.studentType==='regular');
       const term=data.blockTerms.find(row=>row.blockId===student.homeBlock.id);
       assert.equal(store.offerBlockPlan(student.id,term.id,registrar).status,'pending');
     }

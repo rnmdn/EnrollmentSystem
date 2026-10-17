@@ -220,7 +220,7 @@ function studentDetail(student) {
 function sections() {
   const list = (data.blocks || []).filter(block=>`${sectionName(block)} ${block.program}`.toLowerCase().includes(query.toLowerCase()));
   return heading('', 'Sections', `Student groups for ${termLabel()}.`, '<button class="button primary" data-action="show-section-form" type="button">+ Create section</button>') + noticeHTML() +
-    `<section class="panel"><div class="toolbar"><input class="search" id="section-search" type="search" placeholder="Search section or program" aria-label="Search sections" value="${esc(query)}"><span class="panel-note">${list.length} section${list.length===1?'':'s'}</span></div>${list.length ? table(['Section','Students'],list.map(block=>`<tr><td><button class="text-button" type="button" data-open-block="${block.id}" aria-label="Open ${esc(sectionName(block))}">${esc(sectionName(block))}</button></td><td>${block.members}</td></tr>`)) : empty('No sections found', 'Create a section or try another search.')}</section>${blockCreationForm()}`;
+    `<section class="panel"><div class="toolbar"><input class="search" id="section-search" type="search" placeholder="Search section or program" aria-label="Search sections" value="${esc(query)}"><span class="panel-note">${list.length} section${list.length===1?'':'s'}</span></div>${list.length ? table(['Section','Students'],list.map(block=>`<tr><td><button class="text-button" type="button" data-open-block="${block.id}" aria-label="Open ${esc(sectionName(block))}">${esc(sectionName(block))}</button></td><td>${block.members}/${block.capacity}</td></tr>`)) : empty('No sections found', 'Create a section or try another search.')}</section>${blockCreationForm()}`;
 }
 
 function sectionForm() {
