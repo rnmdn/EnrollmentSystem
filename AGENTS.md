@@ -55,6 +55,7 @@ Use components from [jQuery UI](https://jqueryui.com/) for relevant interactive 
 - Add focused tests for ID uniqueness and allocation rules, especially simultaneous requests that could overfill a section.
 - Keep real student data out of sample fixtures, screenshots, and logs.
 - Update this file when the chosen stack or project conventions change.
+- User requests every completed change be committed and pushed to origin/main (https://github.com/rnmdn/EnrollmentSystem). Verify the relevant change first and exclude credentials, local databases, backups, and screenshots. Report the pushed commit; never claim a push or deployment succeeded without confirmation.
 
 ## UX continuity conventions
 

@@ -108,7 +108,17 @@ input::placeholder { color: #64796b; opacity: 1; }
 .class-card strong { font-size: 14px; }
 .ui-dialog { border-radius: 6px !important; overflow: hidden; }
 .ui-dialog .ui-dialog-content { font-size: 14px !important; }
-.ui-dialog .ui-button { min-height: 38px; font: 600 13px 'Outfit Variable', sans-serif !important; }
+.ui-dialog .ui-button:not(.ui-dialog-titlebar-close) { min-height: 38px; font: 600 13px 'Outfit Variable', sans-serif !important; }
+.ui-dialog .ui-dialog-titlebar { box-sizing: border-box; min-height: 58px; padding: 17px 64px 17px 20px !important; }
+.ui-dialog .ui-dialog-title { display: block; float: none; width: auto; margin: 0; white-space: normal; }
+.ui-dialog .ui-dialog-titlebar-close { box-sizing: border-box; top: 50%; right: 7px; width: 44px; height: 44px; min-height: 44px; margin: 0; padding: 0; transform: translateY(-50%); border: 0; border-radius: 4px; background: transparent; color: #204b3c; }
+.ui-dialog .ui-dialog-titlebar-close .ui-icon,
+.ui-dialog .ui-dialog-titlebar-close .ui-button-icon-space { display: none; }
+.ui-dialog .ui-dialog-titlebar-close::before,
+.ui-dialog .ui-dialog-titlebar-close::after { content: ''; position: absolute; top: 21px; left: 13px; width: 18px; height: 2px; border-radius: 1px; background: currentColor; transform: rotate(45deg); }
+.ui-dialog .ui-dialog-titlebar-close::after { transform: rotate(-45deg); }
+.ui-dialog .ui-dialog-titlebar-close:hover { background: #e1ece4; color: #123b2b; }
+.ui-dialog .ui-dialog-titlebar-close:focus-visible { outline: 2px solid #8b651c; outline-offset: -3px; background: #e1ece4; }
 .ui-datepicker, .ui-autocomplete { font-size: 13px !important; }
 
 /* The student entry is an editorial chapter attached to a working form. */
