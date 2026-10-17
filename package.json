@@ -9,12 +9,20 @@
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1",
     "start": "node server/http.js",
-    "test": "node --test server/*.test.js"
+    "practice": "node server/practice-blocks.js",
+    "practice:small": "node server/practice.js",
+    "test": "node --test --test-isolation=none server/*.test.js",
+    "backup": "node server/backup.js backup",
+    "test:load": "node server/load-check.js",
+    "restore-check": "node server/backup.js restore",
+    "import:curriculum": "node server/import-curriculum.js"
   },
   "dependencies": {
     "@fontsource-variable/newsreader": "^5.3.0",
     "@fontsource-variable/outfit": "^5.3.0",
     "@phosphor-icons/web": "^2.1.2",
+    "bcryptjs": "^3.0.3",
+    "gsap": "^3.15.0",
     "jquery": "^3.7.1",
     "jquery-ui-dist": "^1.13.3"
   },
@@ -22,3 +30,4 @@
     "vite": "^7.0.0"
   }
 }
+

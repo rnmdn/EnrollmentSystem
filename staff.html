@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#203d32">
+  <link rel="icon" type="image/png" href="/plp-seal.png">
+  <title>PLP Staff Workspace · Enrollment</title>
+</head>
+<body class="staff-page auth-screen">
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <header class="staff-public-header"><a class="university-brand" href="/" aria-label="PLP Enrollment home"><img class="university-logo" src="/plp-seal.png" alt="" width="64" height="64"><span><strong>PLP Enrollment</strong><small>Enrollment services</small></span></a><a class="button" href="/student.html?view=login">Student portal <i class="ph ph-arrow-up-right" aria-hidden="true"></i></a></header>
+  <div class="app">
+    <aside class="sidebar" id="staff-navigation" aria-label="Primary navigation">
+      <a class="university-brand" href="/"><img class="university-logo" src="/plp-seal.png" alt="" width="64" height="64"><span><strong>PLP Enrollment</strong><small>Staff workspace</small></span></a>
+      <nav aria-label="Workspace">
+        <p class="nav-label">Records</p>
+        <button class="nav-link active" data-page="overview" type="button" aria-current="page"><i class="ph ph-squares-four nav-icon" aria-hidden="true"></i><span>Overview</span></button>
+        <button class="nav-link" data-page="students" type="button"><i class="ph ph-student nav-icon" aria-hidden="true"></i><span>Students</span></button>
+        <button class="nav-link" data-page="curriculum" type="button"><i class="ph ph-book-open nav-icon" aria-hidden="true"></i><span>Curriculum</span></button>
+        <button class="nav-link" data-page="evaluation" type="button"><i class="ph ph-exam nav-icon" aria-hidden="true"></i><span>Individual evaluation</span></button>
+        <p class="nav-label">Enrollment</p>
+        <button class="nav-link" data-page="assignments" type="button"><i class="ph ph-list-checks nav-icon" aria-hidden="true"></i><span>Subject assignments</span></button>
+        <button class="nav-link" data-page="blocks" type="button"><i class="ph ph-users-three nav-icon" aria-hidden="true"></i><span>Blocks</span></button>
+        <button class="nav-link" data-page="sections" type="button"><i class="ph ph-books nav-icon" aria-hidden="true"></i><span>Sections</span></button>
+        <button class="nav-link" data-page="enroll" type="button"><i class="ph ph-arrows-left-right nav-icon" aria-hidden="true"></i><span>Enrollment</span></button>
+        <button class="nav-link" data-page="schedule" type="button"><i class="ph ph-calendar-dots nav-icon" aria-hidden="true"></i><span>Schedule</span></button>
+        <button class="nav-link" data-page="practice" type="button"><i class="ph ph-notebook nav-icon" aria-hidden="true"></i><span>Practice enrollment</span></button>
+        <p class="nav-label">Administration</p>
+        <button class="nav-link" data-page="resources" type="button"><i class="ph ph-buildings nav-icon" aria-hidden="true"></i><span>Rooms &amp; professors</span></button>
+        <button class="nav-link" data-page="terms" type="button"><i class="ph ph-calendar-blank nav-icon" aria-hidden="true"></i><span>Academic terms</span></button>
+        <button class="nav-link" data-page="reports" type="button"><i class="ph ph-file-csv nav-icon" aria-hidden="true"></i><span>Reports</span></button>
+        <button class="nav-link" data-page="audit" type="button"><i class="ph ph-clock-counter-clockwise nav-icon" aria-hidden="true"></i><span>Audit history</span></button>
+        <button class="nav-link" data-page="staff" type="button"><i class="ph ph-key nav-icon" aria-hidden="true"></i><span>Staff access</span></button>
+        <button class="nav-link" data-page="access" type="button"><i class="ph ph-lock-key nav-icon" aria-hidden="true"></i><span>Account recovery</span></button>
+      </nav>
+      <div class="sidebar-foot"><a href="/">Enrollment home <i class="ph ph-arrow-up-right" aria-hidden="true"></i></a></div>
+    </aside>
+    <div class="workspace">
+      <header class="topbar"><div class="topbar-context"><button class="button sidebar-toggle" id="sidebar-toggle" type="button" aria-label="Toggle navigation" aria-expanded="true" aria-controls="staff-navigation"><i class="ph ph-list" aria-hidden="true"></i></button><a class="topbar-brand" href="/">PLP Enrollment</a><span class="topbar-mark"></span><span>Active term <strong id="active-term-label">Opening…</strong></span></div><div class="top-actions"><span class="role">Local registry</span><span class="avatar" aria-hidden="true">R</span></div></header>
+      <main class="page" id="main" tabindex="-1"></main>
+    </div>
+  </div>
+  <div id="confirm-dialog" title="Confirm action"></div>
+  <div id="status" class="sr-only" role="status" aria-live="polite"></div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

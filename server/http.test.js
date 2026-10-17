@@ -46,13 +46,14 @@ test('public student registration is reviewed before enrollment', async () => {
       return response;
     };
     const person = { first: 'Nia', last: 'Tan', birth: '01/01/2008', gender: 'Female', address: 'Test address', phone: '0000000', email: 'nia@example.test', program: 'BS CS', level: '1st year', admitted: '10/01/2026', status: 'Active' };
-    const registration = await (await request('/api/public/register', person)).json();
+    const registration = await (await request('/api/public/register', { ...person, privacyConsent: true })).json();
     assert.match(registration.id, /^\d{2}-\d{5}$/);
     assert.equal((await request(`/api/students/${registration.id}/review`, {})).status, 401);
     assert.equal((await request('/api/auth/setup', { password: 'test-password' })).status, 200);
     assert.equal((await request(`/api/students/${registration.id}/review`, {})).status, 200);
     const student = await (await request('/api/public/student', { id: registration.id, email: person.email, birth: person.birth })).json();
     assert.equal(student.reviewed, true);
+    assert.equal('classes' in student, false);
   } finally { server.close(); }
 });
 
@@ -72,6 +73,7 @@ test('parallel enrollment requests cannot exceed section capacity', async () => 
     const students = await Promise.all([request('/api/students', { ...person, first: 'Ana', last: 'Lee', email: 'ana@example.test' }), request('/api/students', { ...person, first: 'Bea', last: 'Lee', email: 'bea@example.test' })]);
     const ids = await Promise.all(students.map(async response => (await response.json()).id));
     const section = await (await request('/api/sections', { code: 'CS 101', title: 'Computing', section: 'A', instructor: 'Prof. Lee', day: 'Monday', start: '09:00', end: '10:00', room: 'R1', capacity: 1 })).json();
+    assert.equal((await request('/api/curriculum', { code: 'CS 101', title: 'Computing', program: 'BS CS', yearLevel: 1, semester: 1, units: 3 })).status, 201);
     const results = await Promise.all(ids.map(studentId => request('/api/enrollments', { studentId, sectionId: section.id })));
     assert.deepEqual(results.map(response => response.status).sort(), [201, 409]);
   } finally { server.close(); }

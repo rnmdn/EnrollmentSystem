@@ -1,0 +1,283 @@
+/* Student portal additions; the university identity comes from plp.css. */
+.student-school {
+  background: var(--plp-paper);
+  color: var(--plp-green);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Outfit Variable', 'Outfit', sans-serif;
+}
+.student-school [hidden] { display: none !important; }
+.student-school a { text-underline-offset: 4px; }
+.student-school .student-masthead,
+.student-school .student-nav,
+.student-school .student-portal,
+.student-school .student-footer { width: min(1320px, 100%); margin-inline: auto; }
+.student-school .student-masthead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 26px 40px;
+}
+.student-school .student-brand { max-width: 610px; min-width: 0; }
+.student-school .student-wordmark { display: block; }
+.student-school .student-wordmark strong { display: block; font-size: 17px; line-height: 1.35; }
+.student-school .student-practice-label { display: inline-block; padding: 2px 7px; border: 1px solid #526b5c; color: #244f38; background: #f8faf3; font-size: 12px; font-weight: 600; vertical-align: middle; white-space: nowrap; }
+.student-school .student-wordmark > span { display: block; margin-top: 5px; color: #526b5c; font-size: 13px; }
+.student-school .student-header-tools { display: flex; align-items: center; gap: 30px; flex-shrink: 0; }
+.student-school .student-header-tools > a { display: inline-flex; align-items: center; min-height: 44px; color: #36543f; font-size: 13px; }
+.student-school .student-header-tools { flex-wrap: wrap; gap: 12px 22px; }
+.student-school .student-term { max-width: 235px; font-size: 12px; line-height: 1.5; }
+.student-school .student-term > span { display: block; color: #536b5d; }
+.student-school .student-term strong { display: block; font-weight: 600; }
+.student-school .student-staff-link { color: #36543f; font-size: 13px; white-space: nowrap; }
+.student-school .student-nav {
+  display: flex;
+  gap: 30px;
+  padding: 0 40px;
+  border-block: 1px solid #ccd7cb;
+  background: var(--plp-cream);
+}
+.student-school .student-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 51px;
+  padding-block: 14px;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  color: #4e6858;
+  text-decoration: none;
+  font-size: 14px;
+}
+.student-school .student-nav a:hover { color: var(--plp-green); text-decoration: underline; }
+.student-school .student-nav a[aria-current="page"] { border-bottom-color: var(--plp-green); color: var(--plp-green); font-weight: 650; }
+.student-school .student-portal { flex: 1; padding: 42px 40px 72px; }
+.student-school #student-content { outline: none; }
+.student-school .student-layout {
+  display: grid;
+  grid-template-columns: minmax(250px, .76fr) minmax(0, 1.5fr);
+  gap: clamp(30px, 4.5vw, 64px);
+  align-items: start;
+  margin-top: 0;
+}
+.student-school .student-story {
+  position: static;
+  display: block;
+  min-height: 0;
+  padding: 24px 0 0;
+  background: transparent;
+  color: var(--plp-green);
+  overflow: visible;
+}
+.student-school .student-story::after { content: none; }
+.student-school .student-story h1,
+.student-school .page-heading h1,
+.student-school .student-session-panel h1 {
+  max-width: 14ch;
+  margin: 0;
+  font-family: 'Newsreader Variable', Georgia, serif;
+  color: var(--plp-green);
+  font-size: clamp(40px, 4.1vw, 57px);
+  font-weight: 470;
+  line-height: 1.05;
+  letter-spacing: -.025em;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+.student-school .student-story > p { max-width: 38ch; margin: 23px 0 34px; color: #526b5a; font-size: 16px; line-height: 1.7; }
+.student-school .panel { border-radius: 0; background: var(--plp-cream); border-color: #cbd7c5; }
+.student-school .student-layout .form-panel { max-width: none; padding: 30px clamp(22px, 2.8vw, 39px) 34px; }
+.student-school .student-registration { display: block; max-width: 880px; margin-inline: auto; }
+.student-school .student-registration .student-story { padding: 0; margin-bottom: 32px; }
+.student-school .student-registration .student-story h1 { max-width: none; }
+.student-school .student-registration .student-story > p { max-width: 65ch; margin: 18px 0 0; }
+.student-school .student-registration .student-story > .registration-returning { margin-top: 8px; font-size: 14px; }
+.student-school .registration-returning a { display: inline-flex; align-items: center; min-height: 44px; text-underline-offset: 4px; }
+.student-school .student-registration .panel.form-panel { padding: 0; border: 0; background: transparent; }
+.student-school .required-note { margin: 0 0 26px; color: #526b5a; font-size: 13px; }
+.student-school .optional-label { margin-left: 8px; color: #526b5a; font: 400 12px 'Outfit Variable', sans-serif; }
+.student-school .text-action { min-height: 44px; padding: 8px 0; border: 0; background: transparent; color: var(--plp-green); font: 500 14px 'Outfit Variable', sans-serif; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.student-school .text-action:hover { color: #526b5a; }
+.student-school input, .student-school select { accent-color: var(--plp-green); caret-color: var(--plp-green); }
+.student-school ::selection { background: #dce7d2; color: #153d30; }
+.student-school :is(input,select,button,a):focus-visible { outline: 2px solid #4c6b42; outline-offset: 3px; }
+.student-school .panel h2 { font-size: 31px; font-weight: 500; line-height: 1.15; }
+.student-school .panel-head { margin-bottom: 24px; padding-bottom: 21px; }
+.student-school .panel-note { font-size: 14px; line-height: 1.6; color: #526b5a; }
+.student-school .student-fieldset { min-width: 0; margin: 0 0 30px; padding: 21px 0 0; border: 0; border-top: 1px solid #cbd7c5; }
+.student-school .student-fieldset:first-child { padding-top: 10px; border-top: 0; }
+.student-school .student-fieldset legend { padding: 0 12px 0 0; font-family: 'Newsreader Variable', Georgia, serif; font-size: 24px; font-weight: 500; line-height: 1.25; }
+.student-school .form-grid { gap: 21px 22px; }
+.student-school .field { min-width: 0; }
+.student-school .field label { font-size: 14px; line-height: 1.5; }
+.student-school .field input,
+.student-school .field select { min-height: 46px; font-size: 15px; }
+.student-school .field input::placeholder { color: #5c7162; }
+.student-school .field-help { font-size: 12px; color: #536c5a; line-height: 1.55; }
+.student-school .student-section-note { max-width: 70ch; margin: 0 0 16px; color: #4e6857; font-size: 14px; line-height: 1.7; }
+.student-school .type-guidance { margin: 18px 0 0; }
+.student-school .field-label { font-size: 14px; font-weight: 550; }
+.student-school #registration-term { padding-block: 10px; font-size: 16px; }
+.student-school .draft-restored { margin: -8px 0 26px; color: #36543f; font-size: 14px; line-height: 1.6; }
+.student-school .account-help { margin: 20px 0 0; font-size: 14px; }
+.student-school .account-help a { display: inline-flex; align-items: center; min-height: 44px; }
+.student-school .next-step { margin-block: 22px 30px; padding-block: 20px; border-block: 1px solid #bdcbb6; max-width: 78ch; }
+.student-school .next-step h2, .student-school .next-step h3 { margin: 0 0 12px; font: 500 25px 'Newsreader Variable', Georgia, serif; }
+.student-school .next-step p { margin: 10px 0; color: #3d5d48; line-height: 1.7; }
+.student-school .next-step a { display: inline-flex; align-items: center; min-height: 44px; font-size: 14px; }
+.student-school .update-time { margin: 12px 0; font-size: 13px; color: #526b5a; line-height: 1.7; }
+.student-school .enrollment-progress { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); padding: 0; margin: 26px 0 10px; gap: 10px; list-style: none; }
+.student-school .enrollment-progress li { border-bottom: 2px solid #cbd7c5; padding: 12px 0; color: #526b5a; font-size: 13px; line-height: 1.6; }
+.student-school .enrollment-progress .complete { border-color: #6b895e; }
+.student-school .enrollment-progress .current { border-color: #153d30; color: #153d30; font-weight: 650; }
+.student-school .student-help-sections { max-width: 76ch; }
+.student-school .student-help-sections section { padding-block: 26px; border-top: 1px solid #bdcbb6; }
+.student-school .student-help-sections h2 { margin: 0 0 14px; font: 500 28px 'Newsreader Variable', Georgia, serif; }
+.student-school .student-help-sections p { font-size: 15px; line-height: 1.8; color: #3d5d48; }
+.student-school .classification-help { margin: 0; }
+.student-school .classification-help > div { margin-bottom: 14px; }
+.student-school .classification-help dt { font-weight: 600; }
+.student-school .classification-help dd { margin: 5px 0 0; line-height: 1.7; color: #526b5a; }
+.student-school .workload-summary { font-size: 16px; margin: 20px 0; }
+.student-school .mobile-schedule, .student-school .print-heading { display: none; }
+.student-school .print-disclaimer { font-size: 12px; color: #526b5a; margin: 22px 0; line-height: 1.6; }
+.student-school .validation-summary { padding: 18px; border: 1px solid #a54a38; margin-bottom: 24px; }
+.student-school .validation-summary h3 { margin: 0 0 10px; font-size: 17px; }
+.student-school .validation-summary ul { padding-left: 20px; margin: 0; }
+.student-school .validation-summary a { color: #873c2e; display: inline-block; padding-block: 5px; }
+.student-school .check-label { font-size: 14px; line-height: 1.65; }
+.student-school .check-label input[type="checkbox"] { width: 20px; height: 20px; min-height: 20px; accent-color: var(--plp-green); }
+.student-school .student-account-toggle { cursor: pointer; font-weight: 550; }
+.student-school .student-password-fields { margin-top: 23px; }
+.student-school .student-privacy { margin-bottom: 0; }
+.student-school .form-actions { align-items: center; gap: 10px; margin-top: 28px; padding-top: 22px; }
+.student-school .button { white-space: normal; text-align: center; font-size: 14px; line-height: 1.4; border-radius: 3px; }
+.student-school .student-layout .form-actions .button.primary { min-width: 0; }
+.student-school .notice { font-weight: 500; line-height: 1.6; }
+.student-school .field-error { font-size: 13px; line-height: 1.55; }
+.student-school [aria-invalid="true"] { border-color: #a54a38; }
+.student-school .registration-success { max-width: 760px; margin: 0 auto; }
+.student-school .registration-success h1 { font: 500 clamp(36px, 5vw, 50px)/1.1 'Newsreader Variable', serif; margin: 0 0 16px; }
+.student-school .registration-success h2 { font: 500 29px/1.2 'Newsreader Variable', serif; margin: 30px 0 12px; }
+.student-school .registration-success p { max-width: 65ch; line-height: 1.7; }
+.student-school .registration-receipt { padding: 24px 0; margin: 28px 0; border-block: 1px solid #bdcbb6; }
+.student-school .registration-receipt label { display: block; font-weight: 500; margin-bottom: 12px; }
+.student-school .receipt-id-row { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.student-school .receipt-id { width: 230px; max-width: 100%; min-height: 52px; padding: 6px 10px; font: 600 32px/1.2 'Outfit Variable', sans-serif; font-variant-numeric: tabular-nums; color: var(--plp-green); background: transparent; border: 1px solid #81987e; border-radius: 2px; }
+.student-school .registration-receipt p { margin: 12px 0 0; font-size: 14px; }
+.student-school .copy-feedback:empty { display: none; }
+.student-school .registration-success .receipt-review-note { margin-top: 26px; padding-top: 20px; border-top: 1px solid #bdcbb6; }
+.student-school .student-registration-result { margin: 24px 0; padding: 20px 0; border-block: 1px solid #bdcbb6; }
+.student-school .student-registration-result > span { font-size: 13px; }
+.student-school .student-number { display: block; margin-top: 8px; font-size: 30px; font-weight: 600; letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+.student-school .student-registration-result p { margin: 9px 0 0; color: #526b5a; font-size: 13px; line-height: 1.6; }
+.student-school .page-heading { align-items: center; margin: 0 0 30px; }
+.student-school .page-heading h1 { max-width: 24ch; font-size: clamp(35px, 3.7vw, 49px); }
+.student-school .page-heading .subtitle { font-size: 15px; line-height: 1.6; }
+.student-school .page-heading .id-code { font-size: 17px; }
+.student-school .workflow-explanation { max-width: 72ch; color: #3d5d48; font-size: 15px; line-height: 1.7; }
+.student-school .data-table th { font-size: 11px; }
+.student-school .data-table td { padding-block: 17px; font-size: 14px; }
+.student-school .data-table td small { font-size: 13px; line-height: 1.55; }
+.student-school .table-wrap { margin-top: 18px; }
+.student-school .schedule-grid { grid-template-columns: repeat(var(--student-days, 5), minmax(170px, 1fr)); overflow-x: auto; min-width: 0; border-color: #cbd7c5; }
+.student-school .student-timetable-scroll { overflow-x: auto; margin-top: 16px; }
+.student-school .day-column { min-height: 210px; padding: 15px 12px; background: #f8faf3; }
+.student-school .day-title { margin: 0; font-size: 12px; }
+.student-school .class-card { border-radius: 0; padding: 12px; margin-bottom: 10px; font-size: 13px; line-height: 1.5; }
+.student-school .class-card strong { font-size: 13px; line-height: 1.45; }
+.student-school .student-day-empty { margin: 0; color: #5b705e; font-size: 12px; line-height: 1.6; }
+.student-school .student-session-panel { max-width: 760px; margin: 20px 0; padding: 35px; }
+.student-school .student-session-panel h1 { max-width: 24ch; font-size: 42px; }
+.student-school .student-session-panel p { max-width: 65ch; color: #526b5a; font-size: 16px; line-height: 1.7; }
+.student-school .student-footer { margin-top: auto; padding-inline: 40px; font-size: 12px; align-items: center; }
+.student-school .student-footer a { margin-bottom: 0; }
+.student-school .ui-autocomplete { max-height: 260px; max-width: calc(100vw - 32px); font-size: 14px !important; }
+.student-school .ui-menu .ui-menu-item-wrapper { padding: 10px 12px; line-height: 1.5; }
+.student-school .ui-state-active { border-color: #244f38 !important; background: #244f38 !important; color: #fff !important; }
+.student-school .ui-dialog { max-width: calc(100vw - 24px); }
+.student-school .ui-dialog .ui-dialog-title { white-space: normal; }
+.student-school .ui-dialog .ui-dialog-buttonpane { padding: 10px 14px 14px !important; }
+.student-school .ui-datepicker { width: min(290px, calc(100vw - 24px)); }
+.student-school .ui-datepicker select { font: inherit; }
+
+.student-school .back-subject-review { margin-bottom: 28px; padding: 22px 0; border-block: 1px solid #bdcbb6; }
+.student-school .back-subject-review h2 { margin: 0 0 14px; font-size: 30px; }
+.student-school .back-subject-review p { max-width: 72ch; line-height: 1.65; }
+.student-school .retake-options { min-width: 0; margin: 20px 0; padding: 0; border: 0; }
+.student-school .retake-options legend { margin-bottom: 12px; font-weight: 600; }
+.student-school .retake-option { display: flex; gap: 12px; align-items: flex-start; padding: 16px 0; border-top: 1px solid #bdcbb6; cursor: pointer; line-height: 1.6; }
+.student-school .retake-option input { flex: 0 0 20px; width: 20px; height: 20px; margin-top: 3px; accent-color: #244f38; }
+.student-school .retake-option > span { min-width: 0; overflow-wrap: anywhere; }
+.student-school .retake-grade { display: block; margin-top: 6px; color: #3d5d48; font-size: 14px; font-variant-numeric: tabular-nums; }
+.student-school .retake-options:disabled .retake-option { cursor: default; }
+.student-school #student-dialog .form-actions { margin-block: 20px; }
+.student-school #student-dialog .notice.error:focus { outline: 2px solid #244f38; outline-offset: 3px; }
+
+@media (max-width: 1000px) {
+  .student-school .student-masthead { flex-wrap: wrap; gap: 20px; }
+  .student-school .student-header-tools { justify-content: space-between; flex: 1; }
+  .student-school .student-layout { grid-template-columns: minmax(220px, .65fr) minmax(0, 1.35fr); gap: 30px; }
+  .student-school .student-story h1 { font-size: 44px; }
+  .student-school .student-story > p { font-size: 15px; }
+  .student-school .student-layout .form-panel { padding: 26px; }
+  .student-school .student-layout:not(.student-registration) .form-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .student-school .enrollment-progress { grid-template-columns: 1fr 1fr; }
+  .student-school .offer-table { display: none; }
+  .student-school .mobile-schedule { display: block; list-style: none; padding: 0; margin: 0; }
+  .student-school .mobile-schedule > li { padding-block: 22px; border-top: 1px solid #bdcbb6; }
+  .student-school .mobile-schedule h3 { margin: 0 0 10px; font-size: 17px; font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; }
+  .student-school .subject-units { color: #526b5a; font-size: 14px; margin: 0 0 18px; }
+  .student-school .mobile-schedule dl { margin: 0; }
+  .student-school .mobile-schedule dl > div { display: grid; grid-template-columns: 85px minmax(0,1fr); gap: 14px; margin-block: 12px; line-height: 1.6; font-size: 14px; }
+  .student-school .mobile-schedule dt { color: #526b5a; }
+  .student-school .mobile-schedule dd { margin: 0; overflow-wrap: anywhere; }
+  .student-school .student-masthead { padding: 22px; gap: 18px; }
+  .student-school .student-brand { gap: 12px; }
+  .student-school .student-wordmark strong { font-size: 15px; }
+  .student-school .student-wordmark > span { font-size: 12px; }
+  .student-school .student-header-tools { width: 100%; flex: auto; gap: 16px; }
+  .student-school .student-term { max-width: none; font-size: 12px; }
+  .student-school .student-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 0 22px; padding: 0 22px; }
+  .student-school .student-nav a { min-height: 46px; padding-block: 11px; font-size: 13px; }
+  .student-school .student-portal { padding: 28px 22px 50px; }
+  .student-school .student-layout { grid-template-columns: 1fr; gap: 27px; margin-top: 0; }
+  .student-school .student-story { padding: 0; }
+  .student-school .student-story h1 { max-width: 22ch; font-size: clamp(36px, 8vw, 45px); }
+  .student-school .student-story > p { max-width: 65ch; margin: 16px 0 0; font-size: 15px; }
+  .student-school .student-layout .form-panel { padding: 25px 20px; }
+  .student-school .panel h2 { font-size: 29px; }
+  .student-school .student-fieldset legend { font-size: 23px; }
+  .student-school .form-grid { grid-template-columns: 1fr; }
+  .student-school .form-actions { flex-direction: column; align-items: stretch; }
+  .student-school .form-actions .button { width: 100%; }
+  .student-school .page-heading { display: block; }
+  .student-school .page-heading > .button-row { margin-top: 20px; }
+  .student-school .student-session-panel { margin-top: 0; padding: 25px 20px; }
+  .student-school .student-session-panel h1 { font-size: 36px; }
+  .student-school .student-footer { padding-inline: 22px; align-items: flex-start; }
+}
+@media print {
+  @page { margin: 15mm; }
+  .student-school { display: block; background: #fff; color: #000; }
+  .student-school .student-masthead, .student-school .student-nav, .student-school .student-footer,
+  .student-school .button-row, .student-school .form-actions, .student-school .next-step,
+  .student-school .enrollment-progress, .student-school .weekly-schedule, .student-school .enrollment-history,
+  .student-school .mobile-schedule, .student-school .skip-link { display: none !important; }
+  .student-school .back-subject-review { display: none !important; }
+  .student-school .student-portal { width: 100%; padding: 0; }
+  .student-school .print-heading { display: grid; gap: 6px; margin-bottom: 24px; }
+  .student-school .print-heading strong { font-size: 18px; }
+  .student-school .print-heading span { font-size: 12px; }
+  .student-school .offer-table { display: block !important; overflow: visible; }
+  .student-school .current-enrollment { border: 0; padding: 0; background: #fff; }
+  .student-school .data-table { width: 100%; min-width: 0; table-layout: fixed; }
+  .student-school .data-table :is(th,td) { padding: 8px 4px; font-size: 10px; overflow-wrap: anywhere; color: #000; }
+  .student-school .data-table small { font-size: 10px; }
+  .student-school tr { break-inside: avoid; }
+  .student-school .page-heading h1 { font-size: 28px; }
+  .student-school .print-disclaimer { color: #000; }
+}

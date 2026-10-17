@@ -2,7 +2,7 @@
 
 ## Project goal
 
-Build a web application for student master records, course and subject scheduling, section allocation, and permanent student ID generation. The local workflow lets a student register without an account, then lets a registrar sign in, review the registration, create sections, confirm enrollment, and let the student view the resulting schedule.
+Build a web application for student master records, course and subject scheduling, section allocation, and permanent student ID generation. Students register without an account. The registrar reviews records and assigns regular subjects; the Department Head assigns special-case subjects. The registrar offers a schedule, the student signs in to accept or decline, and the registrar confirms an accepted enrollment.
 
 ## Current architecture
 
@@ -13,7 +13,10 @@ Build a web application for student master records, course and subject schedulin
 - Format student numbers as `YY-00001`: the two-digit calendar year when the record is created, followed by a five-digit sequence that resets each year. Existing numbers never change at a year boundary.
 - Model students, subjects, academic terms, sections, and enrollments as separate entities with foreign keys and appropriate unique constraints. Current sections have one meeting time each; expand this only when multiple meetings are required.
 - Enforce enrollment rules on the server: section capacity, duplicate enrollment, and student schedule conflicts. UI checks may improve feedback but cannot replace server validation.
-- Students can register without an account. The registrar sets a password on first use and signs in to review registrations and manage records. Keep the app bound to localhost; further identity verification and access controls are required before deployment to a shared server.
+- Students can register without an account. A student password is required to view schedules and respond to offers; public lookup exposes only review status. Existing students can set their first password using their ID, email, and birth date on this local application. Registrar setup runs once; only the registrar can configure Department Head access. New passwords use bcrypt, with legacy scrypt registrar password verification retained. Keep the app bound to localhost; verified account recovery and further access controls are required before shared deployment.
+- Enforce subject assignment authority on the server: Registrar for regular students, Department Head for back subjects, transferees, returning students, Academic Recovery, and Accessible Learning. Only the registrar schedules and confirms. Pending offers reserve seats; decline releases them. Accepted and confirmed plans cannot be edited through allocation APIs. Require the current offer revision when a student responds.
+- Curriculum entries cover programs, year levels 1–4, semesters 1–2, units, and prerequisite relationships. Load official school content through the curriculum screen; do not label invented subjects as the approved school curriculum.
+- Apply numbered SQLite migrations without changing existing student IDs. Preserve legacy allocations as confirmed historical plans. Daily verified SQLite backups run while the server is running; off-device retention and production recovery targets require school configuration.
 
 ## jQuery UI requirement
 
@@ -29,6 +32,10 @@ Use components from [jQuery UI](https://jqueryui.com/) for relevant interactive 
 - Provide labels, keyboard access, visible focus, and clear validation messages. Check each chosen widget's accessibility behavior in the actual screen.
 
 ## Design direction
+
+- Scope homepage presentation styles to `home-taste.css`. Keep GSAP motion in `home.js`, honor reduced-motion preferences, and keep the university motto static without a pause button. Keep student and staff workflows compact and independent from homepage motion.
+
+- The institution is Pamantasan ng Lungsod ng Pasig (PLP). `/` is the public enrollment home, `/student.html` is the student portal, and `/staff.html` is the protected staff workspace. Institution metadata and source-linked program names live in `institution.js`; subject curricula must still be supplied and verified by staff. Use the shared PLP green identity. Keep source provenance and development status in project documentation; user-facing screens use concise enrollment service wording. Do not claim university approval or production readiness.
 
 - Design for registrar and school staff who work with large amounts of data every day. Prioritize quick scanning, clear actions, and low error rates.
 - Use the academic ledger visual direction in `styles.css`: deep green ink, cool paper surfaces, ruled data regions, Newsreader headings, Outfit body text, and Phosphor icons. Keep contrast strong and text large enough for daily record work.
@@ -48,3 +55,39 @@ Use components from [jQuery UI](https://jqueryui.com/) for relevant interactive 
 - Add focused tests for ID uniqueness and allocation rules, especially simultaneous requests that could overfill a section.
 - Keep real student data out of sample fixtures, screenshots, and logs.
 - Update this file when the chosen stack or project conventions change.
+
+## UX continuity conventions
+
+- Preserve unfinished non-password forms in memory during in-app navigation; never persist passwords or consent as drafts. Warn before unloading dirty pages. Document that drafts do not survive reload.
+- Public registration uses the active database term and a server-recorded Manila date. Reject stale terms rather than silently changing a submission.
+- Published staff offers are read-only; student status explains the next responsible role and actual last update. Show units and a complete mobile subject list.
+- Recovery help must use the existing record and school-approved identity verification. Do not invent online resets, processing promises or offer expiry policies.
+
+- Student registration ends at a dedicated receipt with a copyable permanent ID. Keep password setup a separate optional step; prefill only the ID in first-password setup. A receipt without in-memory result data must offer existing-record help, never invent a successful submission or create a second ID.
+
+## Evaluation and practice conventions
+
+- Academic results accept raw percentages or the supplied transmuted grade scale. Derive Passed/Failed on the server; Not taken has no grade. These are the only three remarks. Do not invent grade bands or fabricate legacy grades.
+- Use Individual evaluation for manual results and atomic CSV imports. Keep current evaluated results distinct from a full transcript of attempts. Changing results invalidates unfinished assignments and student retake choices. Published plans block grade edits.
+- Failed subjects require the student's retake/defer decision after Registrar review, followed by Department Head approval. The Registrar alone selects sections, publishes schedules, and confirms accepted offers. Automatic prerequisite checks use verified passed results.
+- Rooms and professors have catalogs; preserve legacy resource names while blocking case-insensitive time conflicts and room overcapacity.
+- Account recovery is Registrar-assisted for Student and Department Head only, with a recorded school-approved identity verification reference. Single-use reset tokens are hashed in storage, expire in 30 minutes, and revoke existing sessions when redeemed. Initial Department Head setup cannot replace an existing password. There is no Registrar reset endpoint.
+- Expanded practice fixtures live in data/practice-blocks.sqlite on localhost:3004 through npm run practice: 480 fictional BSIT students, 30 each in 1A–1D through 4A–4D; each block has 24 regular, four back-subject, one transferee and one returning student. Preserve progress on restart. The earlier two-student data/practice.sqlite remains available through npm run practice:small (same port; run one instance at a time). Never seed or reset main data/registrar.sqlite. Practice credentials appear only inside the practice workspace. Keep daily backup filenames separate for each database.
+
+## Supplied 2022 curricula
+
+- User-supplied BSIT and BSCS PDFs live unchanged in public/curriculum/. Their transcription is curriculum/plp-2022.js: BSIT 49 entries / 146 units, BSCS 51 / 146. Source notes and hashes are in docs/curriculum-sources.md. Do not claim this source version is the approved curriculum for a newer intake.
+- Curriculum semester 3 means Summer. Preserve and display it separately; do not move Summer subjects into Semester 2. Enrollment terms still support Semesters 1 and 2.
+- Standing requirements enforce both recorded year level and the supplied minimum passed units, counted within the same source curriculum. Never count unrelated practice examples toward those totals.
+- Preserve historical section titles when codes are reused. Catalog-compatible section selection and server validation prevent legacy examples from being offered as differently named supplied subjects. Conflicting existing academic credits block catalog import.
+- Curriculum imports are atomic and idempotent. Use numbered migrations and take a verified backup before migrating a populated database. Keep source descriptions per program; shared course codes can have minor wording differences.
+
+- Section creation reads prerequisites and standing requirements from the selected curriculum subject. Display them read-only; curriculum requirements cannot be changed through the section API. Legacy integrations without curriculum entries keep their prior compatibility path.
+
+## Permanent blocks
+
+- A block identity consists of program, intake year and group letter; students retain that identity through years 1–4. Year level changes the displayed label (1A to 2A, etc.), never the membership or student ID. Registrar records year-level progression; there is no automatic academic promotion.
+- Migration 10 adds block identities, one home block per student, audited membership history, term-specific block schedules and class links. Existing records and class offerings remain unchanged and unassigned to blocks until Registrar review.
+- Only Registrar assigns/transfers home membership, with an explicit reason for transfers. Published plans block transfers until a later term. Block capacity and program compatibility are server enforced.
+- Regular students with a home block receive its complete applicable curriculum schedule, excluding already passed subjects. Automatic prerequisite, standing, resource, student conflict and reservation checks remain mandatory. Each offer is atomic and requires student acceptance followed by Registrar confirmation.
+- Special cases keep their home block while Department Head-approved subjects may use compatible classes in other blocks. Student retake/defer decisions remain required for failed subjects before approval. Each block timetable is prepared separately for each term from its selected curriculum source.

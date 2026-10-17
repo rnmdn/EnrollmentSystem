@@ -1,0 +1,13 @@
+.git/
+.vercel/
+node_modules/
+data/
+documents/
+.env
+.env.*
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.db
+*.log
+server/*.test.js

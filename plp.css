@@ -1,0 +1,158 @@
+/* University identity shared by the public, student and staff workspaces. */
+:root { --plp-green: #153d30; --plp-gold: #b99759; --plp-paper: #f5f5ef; --plp-cream: #fbfbf5; }
+html { scroll-behavior: smooth; scroll-padding-top: 32px; }
+.university-brand { display: inline-flex; gap: 15px; align-items: center; text-decoration: none; color: var(--plp-green); }
+.university-logo { display: block; width: 64px; height: 64px; flex: none; object-fit: contain; }
+.university-brand strong { font-size: 16px; font-weight: 600; line-height: 1.3; letter-spacing: -.015em; }
+.university-brand small { display: block; margin-top: 5px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #536c5f; }
+.university-footer { max-width: 1320px; margin: auto; padding: 32px 40px 38px; display: flex; align-items: flex-end; justify-content: space-between; gap: 25px; color: #526a5c; font-size: 12px; line-height: 1.5; border-top: 1px solid #ccd7cb; }
+.university-footer strong { display: block; color: var(--plp-green); font-size: 14px; }
+.university-footer p { margin: 5px 0 0; }
+.university-footer > div:last-child { text-align: right; }
+.university-footer a { display: inline-block; color: var(--plp-green); text-underline-offset: 4px; margin-bottom: 7px; }
+.university-footer span { display: block; }
+.enrollment-home { background: var(--plp-paper); }
+.university-utility { padding: 10px max(40px, calc((100vw - 1240px) / 2)); display: flex; align-items: center; justify-content: space-between; gap: 20px; color: #f0f3e8; background: var(--plp-green); font-size: 11px; letter-spacing: .025em; }
+.university-utility a { color: #f0f3e8; text-decoration: none; }
+.university-utility i { margin-left: 5px; }
+.university-header { max-width: 1320px; padding: 26px 40px; margin: auto; display: flex; justify-content: space-between; align-items: center; gap: 28px; border-bottom: 1px solid #ccd7cb; }
+.university-header nav { display: flex; gap: 30px; margin-left: auto; align-items: center; }
+.university-header nav a { color: #425e4d; font-size: 13px; font-weight: 550; text-decoration: none; }
+.university-header nav a:hover { color: #153d30; text-decoration: underline; text-underline-offset: 5px; }
+.university-header .header-login { margin-left: 15px; font-size: 12px; }
+.enrollment-home main { max-width: 1320px; margin: auto; padding-inline: 40px; }
+.enrollment-hero { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(360px, .88fr); align-items: center; gap: clamp(35px, 6vw, 100px); padding: 69px 0 67px; }
+.hero-copy h1 { margin: 0; font: 480 clamp(56px, 5.7vw, 80px)/1.01 'Newsreader Variable', Georgia, serif; letter-spacing: -.035em; color: var(--plp-green); }
+.hero-copy h1 > span { color: var(--plp-gold); }
+.hero-copy > p { max-width: 43ch; margin: 25px 0 29px; color: #526a5c; font-size: 17px; line-height: 1.65; }
+.hero-actions { display: grid; justify-items: start; gap: 18px; }
+.hero-actions > .button { min-height: 49px; padding-inline: 22px; font-size: 13px; gap: 22px; }
+.understated-link { color: #264f38; font-size: 12px; font-weight: 550; text-underline-offset: 5px; }
+.hero-assurance { display: flex; gap: 14px; align-items: center; padding-top: 35px; margin-top: 32px; border-top: 1px solid #d5ded0; }
+.hero-assurance > i { font-size: 30px; color: #667b63; }
+.hero-assurance p { margin: 0; color: var(--plp-green); font-size: 12px; font-weight: 550; line-height: 1.6; }
+.hero-assurance span { color: #687a67; font-weight: 400; }
+.enrollment-entry { background: var(--plp-cream); border: 1px solid #c3d1bd; border-radius: 6px; overflow: hidden; }
+.entry-term { display: flex; gap: 9px; align-items: center; padding: 16px 25px; background: #e8ede1; color: #3d5b45; font-size: 12px; border-bottom: 1px solid #c3d1bd; }
+.entry-term > i { font-size: 17px; }
+.entry-body { padding: 31px 28px 20px; }
+.entry-body h2 { margin: 0; font: 500 35px/1.1 'Newsreader Variable', Georgia, serif; letter-spacing: -.025em; }
+.entry-body > p { margin: 9px 0 23px; font-size: 13px; color: #5c715e; }
+.entry-route { display: grid; grid-template-columns: 30px minmax(0, 1fr) 19px; align-items: center; gap: 14px; padding: 20px 0; border-top: 1px solid #dde3d6; color: var(--plp-green); text-decoration: none; }
+.entry-route:hover { background: #eef2e8; }
+.entry-icon { color: #53724f; font-size: 23px; }
+.entry-route strong { display: block; font-size: 13px; font-weight: 600; }
+.entry-route small { display: block; margin-top: 6px; font-size: 11px; line-height: 1.55; color: #596f5c; }
+.entry-route > i { color: #6c8062; font-size: 18px; }
+.entry-body .entry-footnote { margin: 13px 0 1px; font-size: 10px; line-height: 1.6; color: #667b65; }
+.entry-footnote i { margin-right: 5px; }
+.enrollment-guide { padding: 43px 0 49px; border-top: 1px solid #cbd6c6; }
+.section-intro { display: flex; align-items: flex-end; justify-content: space-between; gap: 25px; margin-bottom: 28px; }
+.section-intro h2 { margin: 0; font: 480 36px/1.1 'Newsreader Variable', Georgia, serif; letter-spacing: -.025em; }
+.section-intro p { color: #62735f; font-size: 13px; margin: 8px 0 0; line-height: 1.6; }
+.enrollment-steps { padding: 0; margin: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); list-style: none; }
+.enrollment-steps li { padding: 22px 23px 6px; border-top: 1px solid #b8c8af; border-left: 1px solid #d2dccb; }
+.enrollment-steps li:first-child { border-left: 0; padding-left: 0; }
+.step-number { font-size: 12px; color: #876d3d; font-variant-numeric: tabular-nums; }
+.enrollment-steps h3 { margin: 16px 0 9px; font-size: 13px; font-weight: 650; }
+.enrollment-steps p { max-width: 31ch; margin: 0; color: #5e715d; font-size: 12px; line-height: 1.7; }
+.program-directory { padding: 48px 0; border-top: 1px solid #cbd6c6; }
+.program-search { display: flex; align-items: center; min-width: 300px; border: 1px solid #aebfa6; background: var(--plp-cream); border-radius: 4px; }
+.program-search > i { padding-left: 13px; font-size: 18px; color: #61765d; }
+.program-search input { width: 100%; min-width: 0; border: 0; padding: 13px 10px; outline-offset: 1px; background: transparent; font-size: 12px; }
+.program-search button { padding: 8px; border: 0; background: transparent; }
+#program-directory { display: grid; grid-template-columns: 1fr 1fr; column-gap: 55px; }
+.college-group { padding: 22px 0; border-top: 1px solid #b7c8ad; }
+.college-group h3 { margin: 0 0 12px; color: #51644c; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+.college-group ul { margin: 0; padding: 0; list-style: none; }
+.college-group li { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 9px 0; line-height: 1.55; font-size: 13px; }
+.college-group .program-code { font-size: 10px; color: #5d7359; white-space: nowrap; padding-left: 8px; }
+.directory-source { margin: 20px 0 0; color: #5d715d; font-size: 11px; line-height: 1.8; }
+.directory-source a { color: #28533b; text-underline-offset: 3px; }
+.enrollment-help { display: grid; grid-template-columns: .8fr 1.2fr; gap: 70px; padding: 49px 0; border-top: 1px solid #cbd6c6; }
+.enrollment-help .section-intro { align-self: start; }
+.enrollment-help .understated-link { display: inline-block; margin-top: 22px; }
+.enrollment-home #enrollment-questions .ui-accordion-header { position: relative; margin: 0; padding: 18px 28px 18px 0; background: transparent; border: 0; border-top: 1px solid #c4d1bc; border-radius: 0; color: #244b34; font: 550 13px/1.5 'Outfit Variable', sans-serif; }
+.enrollment-home #enrollment-questions .ui-accordion-header::after { content: '+'; position: absolute; right: 2px; top: 17px; font-size: 20px; font-weight: 400; }
+.enrollment-home #enrollment-questions .ui-accordion-header-active::after { content: '−'; }
+.enrollment-home #enrollment-questions .ui-accordion-content { padding: 0 20px 20px 0; border: 0; background: transparent; color: #5b715c; font: 400 13px/1.8 'Outfit Variable', sans-serif; }
+.enrollment-home #enrollment-questions .ui-accordion-content p { margin: 0; }
+.enrollment-home #enrollment-questions a { color: #28533b; text-underline-offset: 3px; }
+.closing-enrollment { display: flex; align-items: center; justify-content: space-between; gap: 25px; padding: 38px 0 44px; border-top: 1px solid #cbd6c6; }
+.closing-enrollment h2 { margin: 0; font: 480 35px/1.1 'Newsreader Variable', Georgia, serif; letter-spacing: -.025em; }
+.closing-enrollment p { margin: 9px 0 0; color: #62735f; font-size: 12px; line-height: 1.6; }
+.service-unavailable { color: #833e32; }
+.staff-public-header { display: none; }
+.staff-page.auth-screen .staff-public-header { width: min(1320px, 100%); display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 27px 40px; margin: auto; }
+.staff-page.auth-screen .app { min-height: calc(100vh - 120px); display: block; }
+.staff-page.auth-screen .workspace { display: block; margin-left: 0; }
+.staff-page.auth-screen .page { width: min(1200px, 100%); max-width: 1200px; padding: 45px 40px 75px; margin: auto; }
+.staff-entry { display: grid; grid-template-columns: 1fr 1fr; gap: 85px; align-items: center; }
+.staff-entry-copy h1 { margin: 0; font-size: clamp(45px, 4.7vw, 66px); }
+.staff-entry-copy > p { margin: 24px 0; max-width: 43ch; font-size: 16px; line-height: 1.7; color: #566e5a; }
+.staff-entry-copy .staff-role-guide { display: grid; margin-top: 30px; }
+.staff-role-guide div { padding: 16px 0; border-top: 1px solid #c5d3bd; }
+.staff-role-guide strong { font-size: 13px; }
+.staff-role-guide span { display: block; margin-top: 6px; font-size: 12px; line-height: 1.7; color: #5d745f; }
+.staff-page.auth-screen .staff-entry .form-panel { margin-top: 0; padding: 33px; }
+.staff-entry .panel-head { margin-bottom: 25px; }
+.staff-entry .panel h2 { font-size: 31px; }
+.staff-entry-foot { margin: 25px 0 0; font-size: 11px; color: #60745f; }
+.sidebar .university-brand { color: #f3f4e9; padding: 0 9px 35px; gap: 10px; }
+.sidebar .university-logo { width: 46px; height: 46px; }
+.sidebar .university-brand strong { font-size: 12px; line-height: 1.35; }
+.sidebar .university-brand small { color: #c1d3bc; font-size: 10px; }
+.sidebar-foot a { color: #d4e2cb; text-underline-offset: 4px; }
+.plp-workspace-note { color: #526c5b; font-size: 11px; }
+@media (max-width: 1000px) {
+  .university-header { gap: 20px; }
+  .university-header nav { gap: 18px; }
+  .university-header .header-login { margin-left: 0; }
+  .university-brand strong { font-size: 13px; }
+  .enrollment-hero { grid-template-columns: 1fr 1fr; gap: 30px; padding-top: 48px; }
+  .hero-copy h1 { font-size: 61px; }
+  .hero-copy > p { font-size: 15px; }
+  .entry-body { padding: 27px 22px 20px; }
+  .entry-body h2 { font-size: 31px; }
+  .staff-entry { gap: 40px; }
+  .enrollment-help { gap: 35px; }
+}
+@media (max-width: 760px) {
+  .university-utility { padding: 9px 22px; font-size: 10px; }
+  .university-utility > span { display: none; }
+  .university-utility a { margin-left: auto; }
+  .university-header { padding: 20px 22px; flex-wrap: wrap; gap: 18px; }
+  .university-logo { width: 48px; height: 48px; }
+  .university-brand { gap: 10px; }
+  .university-brand strong { font-size: 13px; }
+  .university-brand small { font-size: 9px; }
+  .university-header nav { order: 3; width: 100%; margin: 0; justify-content: space-between; padding-top: 16px; border-top: 1px solid #d6dfd0; }
+  .university-header .header-login { margin-left: auto; padding: 8px 10px; min-height: 38px; font-size: 11px; }
+  .enrollment-home main { padding-inline: 22px; }
+  .enrollment-hero { grid-template-columns: 1fr; padding: 38px 0 43px; gap: 35px; }
+  .hero-copy h1 { font-size: clamp(49px, 10.5vw, 68px); }
+  .hero-copy > p { max-width: 45ch; margin: 20px 0 24px; }
+  .hero-assurance { margin-top: 26px; padding-top: 22px; }
+  .entry-body h2 { font-size: 33px; }
+  .section-intro { align-items: flex-start; flex-direction: column; gap: 20px; }
+  .section-intro h2 { font-size: 31px; }
+  .enrollment-steps { grid-template-columns: 1fr 1fr; row-gap: 24px; }
+  .enrollment-steps li { padding: 20px 15px 0; }
+  .enrollment-steps li:nth-child(3) { border-left: 0; padding-left: 0; }
+  .program-search { width: 100%; min-width: 0; }
+  #program-directory { grid-template-columns: 1fr; }
+  .college-group { padding: 20px 0; }
+  .enrollment-help { grid-template-columns: 1fr; gap: 9px; padding-block: 35px; }
+  .closing-enrollment { align-items: flex-start; flex-direction: column; }
+  .closing-enrollment h2 { font-size: 31px; }
+  .university-footer { padding: 26px 22px; flex-direction: column; align-items: flex-start; gap: 18px; }
+  .university-footer > div:last-child { text-align: left; }
+  .staff-page.auth-screen .staff-public-header { padding: 22px; align-items: flex-start; }
+  .staff-public-header > .button { font-size: 11px; padding: 9px; }
+  .staff-page.auth-screen .page { padding: 25px 22px 50px; }
+  .staff-entry { grid-template-columns: 1fr; gap: 30px; }
+  .staff-entry-copy h1 { font-size: 45px; }
+  .staff-entry-copy > p { font-size: 14px; margin-block: 17px; }
+  .staff-entry-copy .staff-role-guide { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }

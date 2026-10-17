@@ -1,34 +1,37 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#203d32">
-  <title>Registrar Workspace · Enrollment</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#153d30">
+<meta name="description" content="Begin your PLP enrollment. Register, review your enrollment offer, and view your confirmed schedule.">
+<link rel="icon" type="image/png" href="/plp-seal.png"><title>PLP Enrollment · Pamantasan ng Lungsod ng Pasig</title>
 </head>
-<body>
-  <a class="skip-link" href="#main">Skip to main content</a>
-  <div class="app">
-    <aside class="sidebar" aria-label="Primary navigation">
-      <div class="brand"><div class="brand-mark" aria-hidden="true">R<span>.</span></div><div><strong>REGISTRAR</strong><small>Office of Academic Records</small></div></div>
-      <nav aria-label="Workspace">
-        <p class="nav-label">Academic records</p>
-        <button class="nav-link active" data-page="overview" type="button" aria-current="page"><i class="ph ph-squares-four nav-icon" aria-hidden="true"></i><span>Overview</span></button>
-        <button class="nav-link" data-page="students" type="button"><i class="ph ph-student nav-icon" aria-hidden="true"></i><span>Students</span></button>
-        <button class="nav-link" data-page="sections" type="button"><i class="ph ph-books nav-icon" aria-hidden="true"></i><span>Sections</span></button>
-        <button class="nav-link" data-page="enroll" type="button"><i class="ph ph-arrows-left-right nav-icon" aria-hidden="true"></i><span>Enrollment</span></button>
-        <button class="nav-link" data-page="schedule" type="button"><i class="ph ph-calendar-dots nav-icon" aria-hidden="true"></i><span>Schedule</span></button>
-        <button class="nav-link" data-page="terms" type="button"><i class="ph ph-calendar-blank nav-icon" aria-hidden="true"></i><span>Academic terms</span></button>
-      </nav>
-      <div class="sidebar-foot"><span class="foot-rule"></span><strong>Local registry</strong><span>Records saved on this computer</span></div>
-    </aside>
-    <div class="workspace">
-      <header class="topbar"><div class="topbar-context"><span class="topbar-mark"></span><span>Active term <strong id="active-term-label">Opening…</strong></span></div><div class="top-actions"><span class="role">Local registry</span><span class="avatar" aria-hidden="true">R</span></div></header>
-      <main class="page" id="main" tabindex="-1"></main>
-    </div>
-  </div>
-  <div id="confirm-dialog" title="Confirm action"></div>
-  <div id="status" class="sr-only" role="status" aria-live="polite"></div>
-  <script type="module" src="/app.js"></script>
-</body>
-</html>
+<body class="enrollment-home">
+<a class="skip-link" href="#main">Skip to main content</a>
+<div class="university-utility"><span>Pamantasan ng Lungsod ng Pasig</span><a href="/staff.html">Registrar &amp; Department Head <i class="ph ph-arrow-up-right" aria-hidden="true"></i></a></div>
+<header class="university-header">
+<a class="university-brand" href="/" aria-label="PLP Enrollment home"><img class="university-logo" src="/plp-seal.png" alt="" width="64" height="64"><span><strong>Pamantasan ng<br>Lungsod ng Pasig</strong><small>Enrollment services</small></span></a>
+<nav aria-label="Main navigation"><a href="#enrollment-guide">How to enroll</a><a href="#programs">Colleges &amp; programs</a><a href="#questions">Help</a></nav><a class="button header-login" href="/student.html?view=login">Student sign in <i class="ph ph-arrow-right" aria-hidden="true"></i></a>
+</header>
+<main id="main">
+<section class="enrollment-hero" aria-labelledby="welcome-title">
+<div class="hero-copy"><h1 id="welcome-title">PLP student<br><em>enrollment.</em></h1><p>Register your details, review your schedule offer, and accept or decline. The Registrar completes enrollment confirmation.</p><p class="hero-term"><strong>Enrollment term:</strong> <span id="public-term" role="status">Loading academic term…</span></p><div class="hero-actions"><a class="button primary" href="/student.html?view=register">Start registration <i class="ph ph-arrow-up-right" aria-hidden="true"></i></a><a class="button hero-secondary" href="/student.html?view=login">Student sign in <i class="ph ph-arrow-right" aria-hidden="true"></i></a></div><p class="hero-support">No account needed to register. <a href="/student.html?view=status">Already registered? Check registration</a></p></div>
+<div class="hero-art" aria-hidden="true"><img src="/plp-book-hero.webp" alt="" width="2172" height="724" fetchpriority="high" decoding="async"></div>
+<div class="hero-caption"><span>Your student ID stays the same across terms.</span><a href="/student.html?view=help">Help &amp; account recovery</a></div>
+</section>
+<section class="enrollment-guide" id="enrollment-guide" aria-labelledby="guide-title">
+<div class="guide-intro"><h2 id="guide-title">How enrollment works</h2><p>Four steps. School guidance along the way.</p></div>
+<ol class="enrollment-steps">
+<li><i class="ph ph-identification-card" aria-hidden="true"></i><h3>Register your details</h3><p>Register your details and program. Keep the permanent student ID you receive; it stays with you across terms.</p></li>
+<li><i class="ph ph-files" aria-hidden="true"></i><h3>School review</h3><p>The Registrar reviews your record and assigns regular subjects. The Department Head handles special subject assignments.</p></li>
+<li><i class="ph ph-calendar-check" aria-hidden="true"></i><h3>Accept or decline</h3><p>Sign in to review the complete schedule prepared for you. Accept or decline your enrollment offer.</p></li>
+<li><i class="ph ph-check-circle" aria-hidden="true"></i><h3>Registrar confirmation</h3><p>After Registrar confirmation, find your confirmed subjects and timetable in your student account.</p></li>
+</ol></section>
+
+<section class="program-directory college-showcase" id="programs" aria-labelledby="programs-title"><div class="section-intro"><div><h2 id="programs-title">Find your college.<br>Explore your possibilities.</h2><p>Discover PLP’s colleges and the programs they offer.</p></div><div class="program-search"><label class="sr-only" for="program-search">Search programs or colleges</label><i class="ph ph-magnifying-glass" aria-hidden="true"></i><input id="program-search" type="search" placeholder="Search a college or program" autocomplete="off"><button id="clear-program-search" type="button" hidden aria-label="Clear program search"><i class="ph ph-x" aria-hidden="true"></i></button></div></div><div class="college-toolbar"><p id="college-results" role="status" aria-live="polite"></p><div class="college-controls"><button class="college-arrow" id="college-previous" type="button" aria-label="Previous colleges" aria-controls="program-directory"><i class="ph ph-arrow-left" aria-hidden="true"></i></button><button class="college-arrow" id="college-next" type="button" aria-label="Next colleges" aria-controls="program-directory"><i class="ph ph-arrow-right" aria-hidden="true"></i></button></div></div><div id="program-directory" class="college-track" role="region" aria-label="Colleges and their programs; use arrow keys or swipe to browse" tabindex="0"></div><section id="college-programs" class="college-programs" aria-labelledby="college-programs-heading" hidden></section><p id="college-selection-status" class="sr-only" role="status"></p></section>
+<section class="enrollment-help" id="questions" aria-labelledby="questions-title"><div class="section-intro"><div><h2 id="questions-title">Enrollment questions</h2><p>Choose a question to see the answer.</p><a class="understated-link" href="https://plpasig.edu.ph/academics/registrar/" target="_blank" rel="noopener noreferrer">University Registrar <i class="ph ph-arrow-up-right" aria-hidden="true"></i></a></div></div><div id="enrollment-questions"><h3>Do I need an account to register?</h3><div><p>No. Submit your student details without an account. After registration, set up your first password when you are ready to review schedule offers.</p></div><h3>Can I choose my own subjects or sections?</h3><div><p>The Registrar assigns regular subjects and prepares schedules. The Department Head assigns subjects for special cases. Accept or decline the complete offer when it is ready.</p></div><h3>I already have a student ID. Should I register again?</h3><div><p>Keep your existing ID. <a href="/student.html?view=status">Check your registration</a> or <a href="/student.html?view=login">sign in</a> to continue. Your student identity stays the same across terms.</p></div><h3>How do I correct my registration details?</h3><div><p>Ask the Registrar to review your record. Staff verify corrections before updating your information. Your permanent student ID does not change.</p></div></div></section>
+<div class="university-motto"><p>Para sa sarili. Para sa pamilya. Para sa bayan.</p></div>
+<section class="closing-enrollment"><p>Your future has a starting point.</p><h2>Ready to register?</h2><a class="button primary" href="/student.html?view=register">Begin registration <i class="ph ph-arrow-up-right" aria-hidden="true"></i></a><a class="closing-login" href="/student.html?view=login">Already have an account? Sign in</a></section>
+</main>
+<footer class="university-footer"><div><strong>Pamantasan ng Lungsod ng Pasig</strong><p>Edukasyon para sa Sarili, Pamilya at Bayan.</p></div><div><a href="https://plpasig.edu.ph/" target="_blank" rel="noopener noreferrer">University website <i class="ph ph-arrow-up-right" aria-hidden="true"></i></a><span>Student enrollment services</span></div></footer>
+<script type="module" src="/home.js"></script>
+</body></html>

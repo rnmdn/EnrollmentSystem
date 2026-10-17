@@ -2,3 +2,12 @@ node_modules/
 dist/
 .npm-cache/
 data/
+.vercel/
+.env
+.env.*
+!.env.example
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.db
+*.log
