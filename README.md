@@ -89,7 +89,7 @@ The evaluation screen records the current verified result for each student and s
 
 The staff shell uses a white sidebar and mint working surface. Rooms and professors have searchable selections in scheduling; the server checks room capacity and overlapping room, professor, and student times. Existing free-text resource names remain compatible with historical sections.
 
-Run `npm run build` and `npm run practice` to open the separate practice instance on **http://127.0.0.1:3004**. Its expanded synthetic records live only in `data/practice-blocks.sqlite`; the existing `data/registrar.sqlite` is not seeded or reset. Practice credentials and a walkthrough appear in the practice workspace and [expanded practice guide](docs/practice-blocks.md). Each database receives its own daily backup filename.
+Run `npm run build` and `npm run practice` to open the separate practice instance on **http://127.0.0.1:3004**. Its expanded synthetic records live only in `data/practice-blocks.sqlite`; the existing `data/registrar.sqlite` is not seeded or reset. Practice credentials and a walkthrough are documented in [expanded practice guide](docs/practice-blocks.md). Each database receives its own daily backup filename.
 
 ## Supplied BSIT and BSCS curriculum
 
@@ -98,6 +98,10 @@ The two user-supplied 2022–2023 PDFs are now included. BSIT has 49 entries / 1
 For an existing local database, stop the app and run `npm run import:curriculum`. A verified backup is created before migration/import. Restart the app afterward. The expanded practice entry point imports the supplied catalog and seeds 480 fictional students across 16 permanent blocks. The original two-student practice database remains separate through `npm run practice:small`. Summer entries are retained in the catalog; the enrollment calendar still supports Semesters 1 and 2. [Source and transcription notes](docs/curriculum-sources.md) record source hashes, credit totals, standing rules and historical-title compatibility.
 
 ## Permanent blocks and expanded examples
+
+The Sections directory now shows one row per permanent group with its name and number of students. Select the section name to open its timetable, roster and membership history. Curriculum and report dropdowns filter immediately. Practice enrollment navigation has been removed; isolated practice fixtures remain available through the CLI and the practice guides.
+
+The owning student sees a portal notice and a retake dialog identifying current-term subjects blocked by failed prerequisites. Blocked subjects cannot be assigned or offered. The main local database contains one user-requested fictional example, Example Backsubject (example.backsubject@example.test), with failed COMP 103 and blocked COMP 104, COMP 105, IT 201 and IT 202. This local database is excluded from Git; public source contains no exported student database.
 
 Migration 10 adds permanent groups by program, intake year and letter. A learner keeps the same group from 1A to 4A; only Registrar can assign or transfer membership. Transfers require a reason and keep history. Registrar updates year level; advancing a calendar year does not promote a student automatically. Existing main records have no invented block assignment.
 

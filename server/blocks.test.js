@@ -79,6 +79,19 @@ test('complete block offers are atomic, reject mixed classes and lock transfers 
     assert.throws(()=>store.assignHomeBlock(fourth.id,{blockId:foreign.id},registrar),/program/);
   } finally {store.close();}
 });
+test('student notification identifies subjects blocked by a failed prerequisite and clears when passed',()=>{
+  const {store,student}=fixture();
+  try {
+    store.addCurriculum({program,code:'EX2',title:'Example concepts',yearLevel:1,semester:1,units:3,prerequisites:'EX1'},registrar);
+    store.recordResults(student.id,[{code:'EX1',grade:'5.00'},{code:'EX2',remark:'Not taken'}],registrar);
+    assert.deepEqual(store.studentView(student.id).backSubjects.blocked,[{code:'EX2',title:'Example concepts',failedPrerequisites:['EX1']}]);
+    store.chooseBackSubjects(student.id,['EX1'],{role:'student',id:student.id});
+    assert.throws(()=>store.assignSubjects(student.id,['EX2'],head),/Prerequisite/);
+    assert.equal(store.studentView(student.id).classes.length,0);
+    store.recordResults(student.id,[{code:'EX1',grade:'2.00'}],registrar);
+    assert.deepEqual(store.studentView(student.id).backSubjects.blocked,[]);
+  } finally {store.close();}
+});
 test('expanded practice has 30 learners in each 1A–4D block, usable regular and irregular workflows, and preserves progress',async()=>{
   const store=openStore(':memory:');
   try {

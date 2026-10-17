@@ -205,6 +205,8 @@ input::placeholder { color: #64796b; opacity: 1; }
 .workflow-picker .search { width: min(100%, 560px); }
 .filter-grid { display: grid; grid-template-columns: repeat(3, minmax(140px, 1fr)) auto; align-items: end; gap: 16px; margin-bottom: 24px; }
 .filter-grid .field { min-width: 0; }
+#curriculum-filter { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 600px) { #curriculum-filter { grid-template-columns: 1fr; } }
 .filter-grid .button-row { flex-wrap: wrap; }
 .plan-status { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 0 0 12px; }
 .plan-status > span:last-child { color: #46634e; font-size: 14px; }

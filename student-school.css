@@ -197,6 +197,7 @@
 .student-school .ui-menu .ui-menu-item-wrapper { padding: 10px 12px; line-height: 1.5; }
 .student-school .ui-state-active { border-color: #244f38 !important; background: #244f38 !important; color: #fff !important; }
 .student-school .ui-dialog { max-width: calc(100vw - 24px); }
+.student-school .retake-dialog { position: fixed; top: 50% !important; left: 50% !important; transform: translate(-50%, -50%); max-height: calc(100dvh - 24px); }
 .student-school .ui-dialog .ui-dialog-title { white-space: normal; }
 .student-school .ui-dialog .ui-dialog-buttonpane { padding: 10px 14px 14px !important; }
 .student-school .ui-datepicker { width: min(290px, calc(100vw - 24px)); }
