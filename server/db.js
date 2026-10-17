@@ -870,9 +870,11 @@ export function openStore(path, { now = () => new Date() } = {}) {
     if (!['registrar', 'department_head'].includes(actor?.role)) failure('Staff access is required.', 403);
     const visible = new Map(list(actor).students.map(student => [student.id, student]));
     const allPlans = plans();
+    const sectionLabels = new Map(db.prepare('SELECT public_id AS id,label FROM sections').all().map(row=>[row.id,row.label]));
     const rows = allPlans.filter(plan => visible.has(plan.studentId) && (!filters.term || plan.termId === filters.term) && (!filters.status || plan.status === filters.status)).map(plan => {
       const student = visible.get(plan.studentId);
-      return { studentId: student.id, name: `${student.first} ${student.last}`, program: student.program, level: student.level, termId: plan.termId, term: db.prepare('SELECT label FROM terms WHERE id=?').get(plan.termId).label, status: plan.status, subjects: plan.subjects.join(', '), sections: plan.sectionIds.join(', ') };
+      const sections = [...new Set(plan.sectionIds.map(id=>classBlockLabel(id) || sectionLabels.get(id) || 'Not recorded'))].join(', ');
+      return { studentId: student.id, name: `${student.first} ${student.last}`, program: student.program, level: student.level, termId: plan.termId, term: db.prepare('SELECT label FROM terms WHERE id=?').get(plan.termId).label, status: plan.status, subjects: plan.subjects.join(', '), sections };
     });
     if ((!filters.term || filters.term === activeTerm().id) && (!filters.status || filters.status === 'unassigned')) {
       for (const student of visible.values()) if (!allPlans.some(plan => plan.studentId === student.id && plan.termId === activeTerm().id)) rows.push({ studentId: student.id, name: `${student.first} ${student.last}`, program: student.program, level: student.level, termId: activeTerm().id, term: activeTerm().label, status: 'unassigned', subjects: '', sections: '' });

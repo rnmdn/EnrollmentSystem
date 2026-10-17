@@ -551,7 +551,7 @@ async function loadRemotePage(revision) {
   try {
     const rows = await api(target === 'reports' ? `/reports?${new URLSearchParams(reportFilter)}` : '/audit');
     if (revision !== viewRevision || target !== page) return;
-    $('#remote-results').html(rows.length ? (target === 'reports' ? table(['Student ID','Name','Program','Year','Term','Status','Subjects','Sections'], rows.map(r => `<tr>${[r.studentId,r.name,r.program,r.level,r.term,stateLabel(r.status),Array.isArray(r.subjects) ? r.subjects.join(', ') : r.subjects,Array.isArray(r.sections) ? r.sections.join(', ') : r.sections].map(v => `<td>${esc(v)}</td>`).join('')}</tr>`)) : table(['Time','Actor','Action','Entity','Record'],rows.map(r => `<tr>${[r.at,roleLabel(r.actor),r.action,r.entity,r.entityId].map(v => `<td>${esc(v)}</td>`).join('')}</tr>`))) : empty(target === 'reports' ? 'No matching report rows' : 'No audit entries', target === 'reports' ? 'Try another term, program, or status.' : 'Recorded staff actions will appear here.'));
+    $('#remote-results').html(rows.length ? (target === 'reports' ? table(['Student ID','Name','Program','Year','Term','Status','Subjects','Block / section'], rows.map(r => `<tr>${[r.studentId,r.name,r.program,r.level,r.term,stateLabel(r.status),Array.isArray(r.subjects) ? r.subjects.join(', ') : r.subjects,Array.isArray(r.sections) ? r.sections.join(', ') : r.sections].map(v => `<td>${esc(v)}</td>`).join('')}</tr>`)) : table(['Time','Actor','Action','Entity','Record'],rows.map(r => `<tr>${[r.at,roleLabel(r.actor),r.action,r.entity,r.entityId].map(v => `<td>${esc(v)}</td>`).join('')}</tr>`))) : empty(target === 'reports' ? 'No matching report rows' : 'No audit entries', target === 'reports' ? 'Try another term, program, or status.' : 'Recorded staff actions will appear here.'));
   } catch (error) { if (revision === viewRevision) $('#remote-results').html(`<div class="notice error" role="alert">${esc(error.message)}</div><button class="button" data-action="reload-remote" type="button">Try again</button>`); }
 }
 async function submitWorkflow(form, operation) {
@@ -822,6 +822,7 @@ $(document).on('click','#publish-block-offer',function(){const id=this.dataset.s
 
 render();
 bootstrap();
+
 
 
 

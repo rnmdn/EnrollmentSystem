@@ -68,6 +68,7 @@ test('complete block offers are atomic, reject mixed classes and lock transfers 
     assert.throws(()=>store.assignHomeBlock(student.id,{blockId:b.id,reason:'Transfer'},registrar),/published/);
     store.respondPlan(student.id,'accepted',offer.revision,{role:'student',id:student.id});
     store.confirmPlan(student.id,registrar);
+    assert.equal(store.reports({},registrar).find(row=>row.studentId===student.id).sections,'BSIT 1A');
     assert.equal(store.studentView(student.id).homeBlock.id,a.id);
     assert.ok(store.studentView(student.id).classes.every(row=>row.section==='BSIT 1A'));
     const third=store.addStudent({...person,first:'Third',email:'third@example.test'},registrar);
@@ -108,6 +109,7 @@ test('expanded practice has 30 learners in each 1A–4D block, usable regular an
     const offer=store.offerPlan(irregular.id,[guest.id],registrar);
     assert.equal(offer.status,'pending');assert.equal(store.studentView(irregular.id).homeBlock.label,'BSIT 1A');
     assert.equal(store.studentView(irregular.id).classes[0].section,'BSIT 1B');
+    assert.equal(store.reports({},registrar).find(row=>row.studentId===irregular.id).sections,'BSIT 1B');
     const before=store.list(registrar);
     assert.equal((await seedBlockPractice(store)).seeded,false);
     assert.deepEqual(store.list(registrar),before);
