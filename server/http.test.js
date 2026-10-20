@@ -78,3 +78,26 @@ test('parallel enrollment requests cannot exceed section capacity', async () => 
     assert.deepEqual(results.map(response => response.status).sort(), [201, 409]);
   } finally { server.close(); }
 });
+
+
+test('large authenticated JSON responses negotiate gzip without caching records or changing payloads', async () => {
+  let passwordHash;
+  const rows = Array.from({length: 600}, (_, index) => ({name: 'Fictional example '+index, program: 'Sample program', status: 'unassigned'}));
+  const store = {close(){},staffPassword:role => role === 'registrar' ? passwordHash : null,setRegistrarPassword:hash => {passwordHash=hash;},reports:()=>rows};
+  const server=startServer(0,':memory:',{store});
+  try {
+    await once(server,'listening');
+    const base=`http://127.0.0.1:${server.address().port}`;
+    const setup=await fetch(base+'/api/auth/setup',{method:'POST',headers:{'content-type':'application/json','x-registrar-request':'1'},body:JSON.stringify({password:'compression-test-password'})});
+    const cookie=setup.headers.get('set-cookie').split(';')[0];
+    for(const [encoding,expected] of [['gzip','gzip'],['gzip;q=0','identity'],['identity','identity'],['gzip;q=0.5','gzip']]) {
+      const response=await fetch(base+'/api/v1/reports',{headers:{cookie,'accept-encoding':encoding}});
+      assert.equal(response.status,200);
+      assert.equal(response.headers.get('content-encoding'),expected==='gzip'?'gzip':null);
+      assert.equal(response.headers.get('cache-control'),'no-store');
+      assert.equal(response.headers.get('vary'),'Accept-Encoding');
+      assert.deepEqual(await response.json(),rows);
+    }
+    assert.equal((await fetch(base+'/api/reports')).status,401);
+  } finally { await new Promise(resolve=>{server.close(resolve);server.closeAllConnections();}); }
+});

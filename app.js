@@ -11,6 +11,7 @@ import { initStaffNavigation, updateStaffNavigation } from './navigation.js';
 import { programs as plpPrograms } from './institution.js';
 import { evaluateGrade } from './grade.js';
 import { parseResultCSV } from './csv.js';
+import { meetingsOverlap } from './schedule-rules.js';
 window.jQuery = window.$ = $;
 await import('jquery-ui-dist/jquery-ui.js');
 let data = { students: [], sections: [], enrollments: [], curriculum: [], plans: [], terms: [], completed: [] };
@@ -25,6 +26,7 @@ let draftStudentId = '', draftSections = [], assignmentStudentId = '', assignmen
 let curriculumFilter = { program: '', yearLevel: '', semester: '' }, reportFilter = { term: '', program: '', status: '' }, viewRevision = 0;
 const staffViews = ['overview','students','student-new','student','student-edit','sections','section-new','enroll','schedule','terms','curriculum','assignments','reports','audit','staff','evaluation','resources','access','blocks'];
 const formDrafts = new Map();
+const directorySearches = new Map();
 let formContext = '', routeReady = false, routeInitial = true;
 const sectionDrafts = new Map(), subjectDrafts = new Map();
 const planStates = { unassigned: 'Not assigned', draft: 'Subject assignment draft', pending: 'Awaiting student response', accepted: 'Accepted · awaiting confirmation', declined: 'Declined · revision needed', confirmed: 'Enrollment confirmed' };
@@ -39,6 +41,7 @@ function readRoute() {
   page = staffViews.includes(view) ? view : 'overview';
   if (['student','student-edit'].includes(page)) page = selectedStudentId ? page + ':' + selectedStudentId : 'students';
   query = typeof history.state?.staffQuery === 'string' ? history.state.staffQuery : '';
+  if (['students', 'sections'].includes(page)) directorySearches.set(page, query);
   filter = ['All','Active','Inactive'].includes(params.get('status')) ? params.get('status') : 'All';
   curriculumFilter = { program: params.get('curriculumProgram') || '', yearLevel: ['1','2','3','4'].includes(params.get('year')) ? params.get('year') : '', semester: ['1','2','3'].includes(params.get('semester')) ? params.get('semester') : '' };
   reportFilter = { term: params.get('term') || '', program: params.get('reportProgram') || '', status: Object.hasOwn(planStates, params.get('planStatus')) ? params.get('planStatus') : '' };
@@ -154,7 +157,10 @@ function alertUser(message, type = 'success') {
   $('#status').text(message);
   if (type === 'error') {
     $('#main > .notice').remove();
-    $('#main').prepend(`<div class="notice error" role="alert">${esc(message)}</div>`);
+    const errorNotice = $(`<div class="notice error" role="alert" tabindex="-1">${esc(message)}</div>`);
+    $('#main').prepend(errorNotice);
+    errorNotice.trigger('focus');
+    errorNotice[0].scrollIntoView({ block: 'center', behavior: 'instant' });
     return;
   }
   notice = message; noticeType = type; render();
@@ -363,18 +369,20 @@ function render() {
 
 $(document).on('submit', '#auth-form', async function (event) {
   event.preventDefault();
-  try {
-    if (!auth.configured && this.elements.password.value !== this.elements.passwordConfirm.value) throw new Error('The passwords do not match.');
-    await api(auth.configured ? '/auth/login' : '/auth/setup', 'POST', { role: this.elements.role?.value || 'registrar', password: this.elements.password.value });
-    auth = { configured: true, authenticated: true };
-    await bootstrap();
-  } catch (error) { alertUser(error.message, 'error'); }
+  return submitWorkflow(this, async () => {
+    try {
+      if (!auth.configured && this.elements.password.value !== this.elements.passwordConfirm.value) throw new Error('The passwords do not match.');
+      await api(auth.configured ? '/auth/login' : '/auth/setup', 'POST', { role: this.elements.role?.value || 'registrar', password: this.elements.password.value });
+      auth = { configured: true, authenticated: true };
+      await bootstrap();
+    } catch (error) { alertUser(error.message, 'error'); }
+  });
 });
 $(document).on('click', '#logout-button', async function () {
   try { await api('/auth/logout', 'POST'); } catch (error) { alertUser(error.message, 'error'); return; }
   evaluations.clear(); resultPreviews.clear(); recoveryResult = null;
   formDrafts.clear(); sectionDrafts.clear(); subjectDrafts.clear(); draftSections = []; draftStudentId = ''; assignmentCodes = []; assignmentStudentId = '';
-  selectedStudentId = ''; query = ''; filter = 'All'; page = 'overview';
+  selectedStudentId = ''; query = ''; directorySearches.clear(); filter = 'All'; page = 'overview';
   history.replaceState({}, '', location.pathname + '?view=overview');
   auth.authenticated = false;
   data = { students: [], sections: [], enrollments: [] };
@@ -397,20 +405,23 @@ $(document).on('click', '[data-page]', function (event) {
   if (this.tagName === 'A' && (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey)) return;
   event.preventDefault();
   page = this.dataset.page;
+  if (['students', 'sections'].includes(page)) query = directorySearches.get(page) || '';
   if (this.dataset.student) selectedStudentId = this.dataset.student;
   render(); focusMain();
 });
 $(document).on('click', '[data-action="student-detail"]', function () { page = `student:${this.dataset.id}`; render(); focusMain(); });
 $(document).on('click', '[data-action="student-edit"]', function () { page = `student-edit:${this.dataset.id}`; render(); focusMain(); });
 $(document).on('input', '#student-search, #section-search', function () {
-  const position = this.selectionStart; query = this.value; syncRoute(true); render(); const next = document.getElementById(this.id); next.focus(); next.setSelectionRange(position, position);
+  const position = this.selectionStart; query = this.value; directorySearches.set(this.id === 'student-search' ? 'students' : 'sections', query); syncRoute(true); render(); const next = document.getElementById(this.id); next.focus(); next.setSelectionRange(position, position);
 });
 $(document).on('change', '#student-filter', function () { filter = this.value; render(); });
 $(document).on('change', '#schedule-student', function () { selectedStudentId = this.value; render(); });
 $(document).on('submit', '#term-form', async function (event) {
   event.preventDefault();
-  try { await api('/terms', 'POST', Object.fromEntries(new FormData(this))); clearFormDraft(this); await refreshData(); alertUser(`${termLabel()} is now active.`); }
-  catch (error) { alertUser(error.message, 'error'); }
+  return submitWorkflow(this, async () => {
+    try { await api('/terms', 'POST', Object.fromEntries(new FormData(this))); clearFormDraft(this); await refreshData(); alertUser(`${termLabel()} is now active.`); }
+    catch (error) { alertUser(error.message, 'error'); }
+  });
 });
 $(document).on('click', '[data-action="activate-term"]', async function () {
   try { await api(`/terms/${encodeURIComponent(this.dataset.id)}/activate`, 'POST'); await refreshData(); alertUser(`${termLabel()} is now active.`); }
@@ -419,31 +430,35 @@ $(document).on('click', '[data-action="activate-term"]', async function () {
 
 $(document).on('submit', '#student-form', async function (event) {
   event.preventDefault();
-  const fields = Object.fromEntries(new FormData(this));
-  const id = this.dataset.id;
-  const email = fields.email.trim().toLowerCase();
-  try {
-    for (const [label, value] of [['birth date', fields.birth], ['admission date', fields.admitted]]) {
-      const parsed = $.datepicker.parseDate('mm/dd/yy', value);
-      if (parsed > new Date()) throw new Error(label);
-    }
-  } catch { alertUser('Enter valid birth and admission dates that are not in the future.', 'error'); return; }
-  try {
-    const record = await api(id ? `/students/${encodeURIComponent(id)}` : '/students', id ? 'PUT' : 'POST', { ...fields, email });
-    clearFormDraft(this);
-    await refreshData();
-    selectedStudentId = record.id;
-    page = `student:${record.id}`;
-    alertUser(id ? 'Student record updated.' : `Student registered with number ${record.id}.`);
-  } catch (error) { alertUser(error.message, 'error'); }
+  return submitWorkflow(this, async () => {
+    const fields = Object.fromEntries(new FormData(this));
+    const id = this.dataset.id;
+    const email = fields.email.trim().toLowerCase();
+    try {
+      for (const [label, value] of [['birth date', fields.birth], ['admission date', fields.admitted]]) {
+        const parsed = $.datepicker.parseDate('mm/dd/yy', value);
+        if (parsed > new Date()) throw new Error(label);
+      }
+    } catch { alertUser('Enter valid birth and admission dates that are not in the future.', 'error'); return; }
+    try {
+      const record = await api(id ? `/students/${encodeURIComponent(id)}` : '/students', id ? 'PUT' : 'POST', { ...fields, email });
+      clearFormDraft(this);
+      await refreshData();
+      selectedStudentId = record.id;
+      page = `student:${record.id}`;
+      alertUser(id ? 'Student record updated.' : `Student registered with number ${record.id}.`);
+    } catch (error) { alertUser(error.message, 'error'); }
+  });
 });
 $(document).on('submit', '#section-form', async function (event) {
-  event.preventDefault(); const fields = Object.fromEntries(new FormData(this));
-  try { for (const value of [fields.startDate, fields.endDate].filter(Boolean)) $.datepicker.parseDate('yy-mm-dd', value); } catch { alertUser('Use valid academic dates in YYYY-MM-DD format.', 'error'); return; }
-  if (fields.startDate && fields.endDate && fields.startDate > fields.endDate) { alertUser('End date must be on or after start date.', 'error'); return; }
-  if (fields.start >= fields.end) { alertUser('End time must be later than start time.', 'error'); return; }
-  try { await api('/sections', 'POST', fields); clearFormDraft(this); await refreshData(); page = 'sections'; alertUser('Section created. It is ready for student allocation.'); }
-  catch (error) { alertUser(error.message, 'error'); }
+  event.preventDefault();
+  return submitWorkflow(this, async () => {   const fields = Object.fromEntries(new FormData(this));
+    try { for (const value of [fields.startDate, fields.endDate].filter(Boolean)) $.datepicker.parseDate('yy-mm-dd', value); } catch { alertUser('Use valid academic dates in YYYY-MM-DD format.', 'error'); return; }
+    if (fields.startDate && fields.endDate && fields.startDate > fields.endDate) { alertUser('End date must be on or after start date.', 'error'); return; }
+    if (fields.start >= fields.end) { alertUser('End time must be later than start time.', 'error'); return; }
+    try { await api('/sections', 'POST', fields); clearFormDraft(this); await refreshData(); page = 'sections'; alertUser('Section created. It is ready for student allocation.'); }
+    catch (error) { alertUser(error.message, 'error'); }
+  });
 });
 $(document).on('submit', '#enroll-form', async function (event) {
   event.preventDefault(); const fields = Object.fromEntries(new FormData(this));
@@ -458,7 +473,7 @@ $(document).on('submit', '#enroll-form', async function (event) {
   const completed = (data.completed || []).filter(item => item.studentId === student.id).map(item => item.code);
   const missing = (section.prerequisites || '').split(',').map(code => code.trim()).filter(code => code && !completed.includes(code));
   if (missing.length) { alertUser(`Prerequisite not completed: ${missing.join(', ')}. Choose another subject.`, 'error'); return; }
-  const conflict = draftSections.map(sectionById).filter(Boolean).some(item => item.day === section.day && item.start < section.end && section.start < item.end);
+  const conflict = draftSections.map(sectionById).filter(Boolean).some(item => meetingsOverlap(item, section));
   if (conflict) { alertUser('Schedule conflict. Choose a different date or time.', 'error'); return; }
   draftSections.push(section.id);
   alertUser(`${section.code} · ${section.blockLabel || section.section} added to the enrollment list.`);
@@ -572,9 +587,11 @@ async function submitWorkflow(form, operation) {
   if (form.dataset.busy) return;
   form.dataset.busy = 'true';
   const buttons = $(form).find('button[type="submit"]').prop('disabled', true);
+  const labels = buttons.map((_, button) => button.innerHTML).get();
+  buttons.text('Please wait…');
   $(form).attr('aria-busy', 'true');
   try { await operation(); } catch (error) { alertUser(error.message, 'error'); }
-  finally { delete form.dataset.busy; buttons.prop('disabled', false); $(form).removeAttr('aria-busy'); }
+  finally { delete form.dataset.busy; buttons.prop('disabled', false).each((index, button) => { button.innerHTML = labels[index]; }); $(form).removeAttr('aria-busy'); }
 }
 $(document).on('click', '#import-plp-curriculum', function () {
   $('#confirm-dialog').html('<p>Load the supplied <strong>2022–2023 BSIT and BSCS curricula</strong>?</p><p>Existing matching entries are kept. Conflicting curriculum or academic credit records must be reviewed before import.</p>').dialog({title:'Load supplied curricula',modal:true,width:Math.min(560,window.innerWidth-24),buttons:[{text:'Cancel',click(){$(this).dialog('close');}},{text:'Load curricula',async click(){const dialog=$(this);dialog.parent().find('button').prop('disabled',true);try{const result=await api('/curriculum/import-2022','POST',{});await refreshData();dialog.dialog('close');alertUser(result.inserted+' curriculum entries loaded; '+result.existing+' already present.');}catch(error){dialog.dialog('close');alertUser(error.message,'error');}finally{dialog.parent().find('button').prop('disabled',false);}}}]});

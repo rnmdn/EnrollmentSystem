@@ -108,3 +108,9 @@ Migration 10 adds permanent groups by program, intake year and letter. A learner
 **Blocks** provides the active-term curriculum timetable, roster and membership history. Registrar selects catalog rooms and professors; overlapping block classes, room/professor clashes and capacity errors are rejected. Regular students receive their applicable block classes together; irregular students retain their home block while taking eligible Department Head-approved classes elsewhere. Published offers still require student acceptance and Registrar confirmation.
 
 `npm run practice` now uses `data/practice-blocks.sqlite` on localhost:3004. It has 480 fictional learners across 16 groups (1A–1D, 2A–2D, 3A–3D, 4A–4D), 100 block classes and three Friday retake classes. Each block starts with 15 of 30 places used; 240 fictional learners are unassigned so they can be added during a demonstration. Each group has 24 regular students, four with back subjects, one transferee and one returning student across its assigned and unassigned records. The older `data/practice.sqlite` stays separate (`npm run practice:small`, same port; stop the expanded instance first). Startup preserves existing progress and credentials. See [walkthrough and practice passwords](docs/practice-blocks.md).
+
+## System audit and representative load checks
+
+See [the 20 October audit and prioritized roadmap](docs/system-audit-2026-10-20.md) for verified fixes, outstanding release gates and current performance results.
+
+`npm run test:load:practice` benchmarks 50 concurrent reads against a private temporary copy of the existing 480-student fictional practice database. It does not seed or reset main records. The full staff snapshot currently misses the 3-second p95 target, so this command exits nonzero; Reports meets the target in the recorded local run. The smaller `npm run test:load` remains a smoke test, not proof of production capacity.

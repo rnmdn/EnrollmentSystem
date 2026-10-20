@@ -102,3 +102,9 @@ The isolated practice instance includes two synthetic BSIT students and two exam
 ## Supplied curriculum evidence
 
 The user supplied scanned BSIT and BSCS 2022–2023 curricula. All four pages were reviewed; the transcription includes BSIT 49 subjects / 146 units and BSCS 51 / 146, subject prerequisites, year-standing checks, and separately labeled Summer entries. Original PDFs are available from the Curriculum screen. Automated tests verify semester totals, complete prerequisite references, standing enforcement, atomic/idempotent imports and protection against unrelated historical sections with reused codes. These source versions do not establish curriculum approval for a newer intake.
+
+## Verification record - 20 October 2026
+
+The [system audit and roadmap](docs/system-audit-2026-10-20.md) records 72 passing automated tests, a passing frontend build, no known npm advisories at audit time, and a verified main-database backup/restore-copy exercise. Account setup, backup verification, academic-date selection, isolated directory searches, practice-cookie isolation and staff feedback were hardened without a schema migration.
+
+The 480-student, 50-concurrent-read benchmark still measured staff data p95 at 4,053 ms; Reports measured 1,232 ms. **NFR-02 is not accepted for the full workspace endpoint.** The small in-memory load check passing does not override this result. Internet hosting, production identity controls, off-device recovery and school UAT remain release gates.

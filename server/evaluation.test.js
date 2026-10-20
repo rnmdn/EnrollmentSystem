@@ -210,3 +210,29 @@ test('legacy completion continues satisfying prerequisites until explicitly repl
   assert.deepEqual(completed(store, student), []);
   assert.equal(store.evaluation(student.id, registrar).curriculum.find(row => row.code === 'EX102').eligible, false);
 });
+
+
+test('batched academic results preserve program-specific titles for a shared code', t => {
+  const store = openStore(':memory:');
+  t.after(() => store.close());
+  const subject = {code:'SHARED',title:'Example first title',units:3,program:'Example program one',yearLevel:1,semester:1,prerequisites:'',minimumYear:0,minimumPassedUnits:0};
+  store.importCurriculum({version:'Example version',subjects:[subject,{...subject,program:'Example program two',title:'Example second title'}]},registrar);
+  const first = store.addStudent({...person,program:subject.program},registrar);
+  const second = store.addStudent({...person,first:'Second',email:'second@example.test',program:'Example program two'},registrar);
+  for(const student of [first,second]) store.recordResults(student.id,[{code:'SHARED',grade:'2.00'}],registrar);
+  const results=store.list(registrar).results;
+  assert.equal(results.find(row=>row.studentId===first.id).title,'Example first title');
+  assert.equal(results.find(row=>row.studentId===second.id).title,'Example second title');
+  assert.equal('program' in results[0],false,'internal join columns do not change the API record shape');
+});
+
+test('duplicate room and professor names return actionable errors without adding records', t => {
+  const store=openStore(':memory:');
+  t.after(()=>store.close());
+  for(const kind of ['room','professor']) {
+    const resource={kind,name:kind==='room'?'Example Lab':'Example Professor',...(kind==='room'?{capacity:30}:{})};
+    store.addResource(resource,registrar);
+    assert.throws(()=>store.addResource({...resource,name:' '+resource.name.toLowerCase()+' '},registrar),error=>error.status===409 && /already exists in the catalog/.test(error.message));
+  }
+  assert.equal(store.resources().length,2);
+});

@@ -4,6 +4,7 @@ import { resolve, extname, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { randomBytes, scrypt, timingSafeEqual, createHash } from 'node:crypto';
 import { promisify } from 'node:util';
+import { gzip } from 'node:zlib';
 import { hash, compare } from 'bcryptjs';
 import { openStore } from './db.js';
 import { startDailyBackups } from './backup.js';
@@ -17,9 +18,24 @@ const deriveKey = promisify(scrypt);
 const dummyHash = await hash('unavailable-account-password', 10);
 
 function json(res, status, body, extra = {}) {
-  res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff', ...extra });
-  res.end(JSON.stringify(body));
+  const payload = Buffer.from(JSON.stringify(body));
+  const headers = { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff', vary: 'Accept-Encoding', ...extra };
+  const gzipPreference = String(res.req?.headers['accept-encoding'] || '').split(',').map(item => item.trim().split(';')).find(([name]) => name.trim().toLowerCase() === 'gzip');
+  const quality = gzipPreference?.slice(1).find(item => /^\s*q\s*=/i.test(item));
+  const acceptsGzip = gzipPreference && (!quality || Number(quality.split('=')[1]) > 0);
+  if (payload.length >= 16_384 && acceptsGzip) {
+    gzip(payload, { level: 1 }, (error, compressed) => {
+      if (res.destroyed) return;
+      // A compression failure can safely fall back before response headers are sent.
+      res.writeHead(status, error ? headers : { ...headers, 'content-encoding': 'gzip' });
+      res.end(error ? payload : compressed);
+    });
+  } else {
+    res.writeHead(status, headers);
+    res.end(payload);
+  }
 }
+
 async function body(req) {
   let text = '';
   for await (const chunk of req) {
@@ -90,8 +106,10 @@ export function startServer(port = 3001, databasePath = resolve(root, 'data', 'r
   const idleTimeout = 8 * 60 * 60 * 1000;
   let loginAttempts = 0;
   let retryAfter = 0;
-  const sessionId = req => /(?:^|;\s*)registrar_session=([a-f0-9]{64})(?:;|$)/.exec(req.headers.cookie || '')?.[1];
-  const cookie = token => `registrar_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${token ? 28800 : 0}`;
+  const cookieName = options.practice ? 'registrar_practice_session' : 'registrar_session';
+  const sessionPattern = new RegExp(`(?:^|;\\s*)${cookieName}=([a-f0-9]{64})(?:;|$)`);
+  const sessionId = req => sessionPattern.exec(req.headers.cookie || '')?.[1];
+  const cookie = token => `${cookieName}=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${token ? 28800 : 0}`;
   const actorFor = (req, res) => {
     const token = sessionId(req);
     const session = sessions.get(token);
@@ -258,7 +276,7 @@ export function startServer(port = 3001, databasePath = resolve(root, 'data', 'r
       }
       if (path === '/staff/department-head' && req.method === 'POST') {
         if (staffPassword('department_head')) failure('Department Head access is already configured. Use verified account recovery to reset it.', 409);
-        store.setStaffPassword('department_head', await passwordHash((await body(req)).password));
+        store.setStaffPassword('department_head', await passwordHash((await body(req)).password), { initial: true });
         for (const [token, session] of sessions) if (session.role === 'department_head') sessions.delete(token);
         json(res, 200, { configured: true }); return;
       }

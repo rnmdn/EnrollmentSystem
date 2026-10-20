@@ -251,3 +251,39 @@ test('department-head password replacement revokes all old sessions and rejects 
   assert.equal((await first('/api/auth/login','POST',{role:'department_head',password:'replacement-password'})).status,200);
   assert.equal((await registrar('/api/data')).status,200);
 });
+
+test('concurrent Department Head setup creates one credential and never replaces the winner', async t => {
+  const store = openStore(':memory:');
+  const { client } = await fixture(t, { store });
+  const registrar = client();
+  await setup(registrar);
+  const choices = ['first-head-password', 'second-head-password'];
+  const responses = await Promise.all(choices.map(value => registrar('/api/staff/department-head', 'POST', { password: value })));
+  assert.deepEqual(responses.map(response => response.status).sort(), [200, 409]);
+  const winner = responses.findIndex(response => response.status === 200);
+  const original = store.staffPassword('department_head');
+  assert.equal(await compare(choices[winner], original), true);
+  assert.equal((await registrar('/api/v1/staff/department-head', 'POST', { password: 'replacement-head-password' })).status, 409);
+  assert.equal(store.staffPassword('department_head'), original);
+});
+
+test('main and practice sessions remain independent when a browser shares localhost cookies', async t => {
+  const main = startServer(0, ':memory:');
+  const practice = startServer(0, ':memory:', {practice:true});
+  t.after(async()=>{await Promise.all([main,practice].map(server=>new Promise(resolve=>{server.close(resolve);server.closeAllConnections();})));});
+  await Promise.all([once(main,'listening'),once(practice,'listening')]);
+  const jar = new Map();
+  async function request(server,path,method='GET',input) {
+    const response=await fetch(`http://127.0.0.1:${server.address().port}/api${path}`,{method,headers:{cookie:[...jar].map(([key,value])=>`${key}=${value}`).join('; '),'content-type':'application/json','x-registrar-request':'1'},body:input===undefined?undefined:JSON.stringify(input)});
+    const setCookie=response.headers.get('set-cookie');
+    if(setCookie){const [key,value]=setCookie.split(';')[0].split('=');if(value)jar.set(key,value);else jar.delete(key);}
+    return response;
+  }
+  assert.equal((await request(main,'/auth/setup','POST',{password})).status,200);
+  assert.equal((await request(practice,'/auth/setup','POST',{password})).status,200);
+  for(const server of [main,practice]) assert.equal((await (await request(server,'/auth/status')).json()).authenticated,true);
+  assert.equal(jar.size,2);
+  await request(practice,'/auth/logout','POST',{});
+  assert.equal((await (await request(main,'/auth/status')).json()).authenticated,true);
+  assert.equal((await (await request(practice,'/auth/status')).json()).authenticated,false);
+});

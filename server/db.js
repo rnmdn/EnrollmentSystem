@@ -191,11 +191,12 @@ export function openStore(path, { now = () => new Date() } = {}) {
     if (!row) failure('Block schedule was not found.',404);
     return {...row,label:blockName(row,row.yearLevel)};
   }
-  function blockSubjects(term) { return curriculum().filter(row=>row.program===term.program && row.yearLevel===term.yearLevel && row.semester===Number(term.termId.split('-')[1]) && row.source===term.source); }
+  function blockSubjects(term, entries = curriculum()) { return entries.filter(row=>row.program===term.program && row.yearLevel===term.yearLevel && row.semester===Number(term.termId.split('-')[1]) && row.source===term.source); }
   function blockTermRows() {
+    const entries = curriculum();
     return db.prepare('SELECT id FROM block_terms WHERE term_id=?').all(activeTerm().id).map(({id})=>{
       const term=blockTermRecord(id);
-      return {...term,subjects:blockSubjects(term),classes:db.prepare('SELECT s.public_id AS sectionId,sub.code FROM block_classes c JOIN sections s ON s.id=c.section_id JOIN subjects sub ON sub.id=c.subject_id WHERE c.block_term_id=? ORDER BY sub.code').all(id)};
+      return {...term,subjects:blockSubjects(term,entries),classes:db.prepare('SELECT s.public_id AS sectionId,sub.code FROM block_classes c JOIN sections s ON s.id=c.section_id JOIN subjects sub ON sub.id=c.subject_id WHERE c.block_term_id=? ORDER BY sub.code').all(id)};
     });
   }
   function classBlockLabel(publicId) {
@@ -303,13 +304,22 @@ export function openStore(path, { now = () => new Date() } = {}) {
   function audit(actor, action, entity, id) {
     db.prepare('INSERT INTO audit_log (actor_id, actor_label, action, entity, entity_id) VALUES (?, ?, ?, ?, ?)').run(legacyAuditReference ? null : actorId(actor), String(actorId(actor)), action, entity, String(id));
   }
+  function studentRows(actor) {
+    const homes = new Map(db.prepare('SELECT s.number AS studentId,b.id,b.program,b.group_code AS groupCode,b.cohort_year AS cohortYear,b.capacity,s.level,sb.assigned_at AS assignedAt FROM student_blocks sb JOIN students s ON s.id=sb.student_id JOIN blocks b ON b.id=sb.block_id').all().map(({studentId,...row}) => [studentId,{...row,label:blockName(row,parseInt(row.level))}]));
+    return db.prepare('SELECT number AS id, first, last, birth, gender, address, phone, email, program, level, admitted, status, student_type AS studentType, semester, reviewed_at AS reviewedAt FROM students ORDER BY id').all().filter(student => actor?.role !== 'department_head' || student.studentType !== 'regular').map(student => ({...student,homeBlock:homes.get(student.id) || null}));
+  }
+  function classBlockLabels() {
+    return new Map(db.prepare('SELECT s.public_id AS sectionId,b.program,b.group_code AS groupCode,bt.year_level AS yearLevel FROM block_classes c JOIN sections s ON s.id=c.section_id JOIN block_terms bt ON bt.id=c.block_term_id JOIN blocks b ON b.id=bt.block_id').all().map(row => [row.sectionId,blockName(row,row.yearLevel)]));
+  }
   function list(actor) {
     const term = activeTerm();
     const terms = db.prepare(`SELECT terms.id, terms.label, terms.active, COUNT(DISTINCT sections.id) AS sections, COUNT(enrollments.student_id) AS enrollments
       FROM terms LEFT JOIN sections ON sections.term_id = terms.id LEFT JOIN enrollments ON enrollments.section_id = sections.id
       GROUP BY terms.id ORDER BY terms.id DESC`).all();
-    const students = db.prepare('SELECT number AS id, first, last, birth, gender, address, phone, email, program, level, admitted, status, student_type AS studentType, semester, reviewed_at AS reviewedAt FROM students ORDER BY id').all().filter(student => actor?.role !== 'department_head' || student.studentType !== 'regular').map(student=>({...student,homeBlock:homeBlock(student.id)}));
-    const sections = db.prepare(`SELECT sections.public_id AS id, subjects.code, COALESCE(sections.title_override, subjects.title) AS title, sections.label AS section, sections.instructor, sections.day, sections.start, sections.end, sections.room, sections.capacity, sections.start_date AS startDate, sections.end_date AS endDate, COALESCE((SELECT group_concat(prereq.code, ', ') FROM subject_prerequisites JOIN subjects prereq ON prereq.id = subject_prerequisites.prerequisite_id WHERE subject_prerequisites.subject_id = subjects.id), '') AS prerequisites FROM sections JOIN subjects ON subjects.id = sections.subject_id WHERE sections.term_id = ? ORDER BY sections.id`).all(term.id).map(section => ({...section,catalogMatch:catalogSectionMatches(section.id),blockLabel:classBlockLabel(section.id)}));
+    const students = studentRows(actor);
+    const blockLabels = classBlockLabels();
+    const catalogMatches = new Set(db.prepare(`SELECT DISTINCT sec.public_id AS id FROM sections sec JOIN subjects sub ON sub.id=sec.subject_id JOIN curriculum c ON c.subject_id=sub.id WHERE sec.term_id=? AND EXISTS (SELECT 1 FROM curriculum alias WHERE alias.subject_id=sub.id AND alias.source_label=c.source_label AND lower(COALESCE(NULLIF(alias.display_title,''),sub.title))=lower(COALESCE(sec.title_override,sub.title)))`).all(term.id).map(row => row.id));
+    const sections = db.prepare(`SELECT sections.public_id AS id, subjects.code, COALESCE(sections.title_override, subjects.title) AS title, sections.label AS section, sections.instructor, sections.day, sections.start, sections.end, sections.room, sections.capacity, sections.start_date AS startDate, sections.end_date AS endDate, COALESCE((SELECT group_concat(prereq.code, ', ') FROM subject_prerequisites JOIN subjects prereq ON prereq.id = subject_prerequisites.prerequisite_id WHERE subject_prerequisites.subject_id = subjects.id), '') AS prerequisites FROM sections JOIN subjects ON subjects.id = sections.subject_id WHERE sections.term_id = ? ORDER BY sections.id`).all(term.id).map(section => ({...section,catalogMatch:catalogMatches.has(section.id),blockLabel:blockLabels.get(section.id) || null}));
     const enrollments = db.prepare('SELECT students.number AS studentId, sections.public_id AS sectionId FROM enrollments JOIN students ON students.id = enrollments.student_id JOIN sections ON sections.id = enrollments.section_id WHERE sections.term_id = ? ORDER BY enrollments.created_at').all(term.id);
     const completed = db.prepare('SELECT students.number AS studentId, subjects.code FROM completed_subjects JOIN students ON students.id = completed_subjects.student_id JOIN subjects ON subjects.id = completed_subjects.subject_id').all();
     const visible = new Set(students.map(student => student.id));
@@ -521,10 +531,15 @@ export function openStore(path, { now = () => new Date() } = {}) {
     if (!['registrar', 'department_head'].includes(role)) failure('Choose a staff role.');
     return db.prepare('SELECT value FROM settings WHERE key=?').get(`${role}_password`)?.value || null;
   }
-  function setStaffPassword(role, hash) {
+  function setStaffPassword(role, hash, { initial = false } = {}) {
     staffPassword(role);
-    db.prepare('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').run(`${role}_password`, hash);
-    audit({ role: 'registrar', id: 'registrar' }, 'configure', 'staff', role);
+    return transaction(() => {
+      const result = db.prepare(initial
+        ? 'INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)'
+        : 'INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').run(`${role}_password`, hash);
+      if (initial && !result.changes) failure('Department Head access is already configured. Use verified account recovery to reset it.', 409);
+      audit({ role: 'registrar', id: 'registrar' }, 'configure', 'staff', role);
+    });
   }
   function studentPassword(number) { return db.prepare('SELECT password_hash FROM students WHERE number=?').get(number)?.password_hash || null; }
   function studentByCredentials(number, email, birth) {
@@ -539,7 +554,14 @@ export function openStore(path, { now = () => new Date() } = {}) {
   }
 
   function resultRows() {
-    return db.prepare(`SELECT s.number AS studentId,sub.code,COALESCE((SELECT NULLIF(c.display_title,'') FROM curriculum c WHERE c.subject_id=sub.id AND c.program=(SELECT program FROM students WHERE id=r.student_id) ORDER BY c.source_label DESC LIMIT 1),sub.title) AS title,r.grade,r.raw_grade AS rawGrade,r.remark,r.term_id AS termId,r.updated_at AS updatedAt FROM academic_results r JOIN students s ON s.id=r.student_id JOIN subjects sub ON sub.id=r.subject_id ORDER BY sub.code`).all();
+    return db.prepare(`WITH titles AS (
+      SELECT subject_id,program,NULLIF(display_title,'') AS title,
+        row_number() OVER (PARTITION BY subject_id,program ORDER BY source_label DESC) AS rank
+      FROM curriculum
+    ) SELECT s.number AS studentId,sub.code,COALESCE(t.title,sub.title) AS title,r.grade,r.raw_grade AS rawGrade,r.remark,r.term_id AS termId,r.updated_at AS updatedAt
+      FROM academic_results r JOIN students s ON s.id=r.student_id JOIN subjects sub ON sub.id=r.subject_id
+      LEFT JOIN titles t ON t.subject_id=r.subject_id AND t.program=s.program AND t.rank=1
+      ORDER BY sub.code,r.student_id`).all();
   }
   function failedRows(id) {
     return db.prepare("SELECT sub.code,COALESCE((SELECT NULLIF(c.display_title,'') FROM curriculum c WHERE c.subject_id=sub.id AND c.program=(SELECT program FROM students WHERE id=r.student_id) ORDER BY c.source_label DESC LIMIT 1),sub.title) AS title,r.grade,r.raw_grade AS rawGrade,r.remark FROM academic_results r JOIN subjects sub ON sub.id=r.subject_id WHERE r.student_id=? AND r.remark='failed' ORDER BY sub.code").all(id);
@@ -626,7 +648,11 @@ export function openStore(path, { now = () => new Date() } = {}) {
     if (!['room','professor'].includes(kind)) failure('Choose room or professor.');
     const capacity = kind === 'room' ? Number(input.capacity) : null;
     if (kind==='room' && (!Number.isInteger(capacity) || capacity<1 || capacity>500)) failure('Room capacity must be from 1 to 500.');
-    return transaction(()=>{const id=db.prepare('INSERT INTO resources(kind,name,capacity) VALUES(?,?,?)').run(kind,name,capacity).lastInsertRowid;audit(actor,'create',kind,id);return {id,kind,name,capacity};});
+    return transaction(()=>{
+      if (db.prepare('SELECT 1 FROM resources WHERE kind=? AND name=? COLLATE NOCASE').get(kind,name)) failure(`This ${kind === 'room' ? 'room' : 'professor'} already exists in the catalog.`,409);
+      const id=db.prepare('INSERT INTO resources(kind,name,capacity) VALUES(?,?,?)').run(kind,name,capacity).lastInsertRowid;
+      audit(actor,'create',kind,id);return {id,kind,name,capacity};
+    });
   }
   function issueReset(role,target,tokenHash,actor,verificationNote='') {
     if (actor?.role !== 'registrar' || !['student','department_head'].includes(role)) failure('Only the Registrar can reset students or the Department Head.',403);
@@ -870,12 +896,13 @@ export function openStore(path, { now = () => new Date() } = {}) {
   }
   function reports(filters = {}, actor) {
     if (!['registrar', 'department_head'].includes(actor?.role)) failure('Staff access is required.', 403);
-    const visible = new Map(list(actor).students.map(student => [student.id, student]));
+    const visible = new Map(studentRows(actor).map(student => [student.id, student]));
+    const blockLabels = classBlockLabels();
     const allPlans = plans();
     const sectionLabels = new Map(db.prepare('SELECT public_id AS id,label FROM sections').all().map(row=>[row.id,row.label]));
     const rows = allPlans.filter(plan => visible.has(plan.studentId) && (!filters.term || plan.termId === filters.term) && (!filters.status || plan.status === filters.status)).map(plan => {
       const student = visible.get(plan.studentId);
-      const sections = [...new Set(plan.sectionIds.map(id=>classBlockLabel(id) || sectionLabels.get(id) || 'Not recorded'))].join(', ');
+      const sections = [...new Set(plan.sectionIds.map(id=>blockLabels.get(id) || sectionLabels.get(id) || 'Not recorded'))].join(', ');
       return { studentId: student.id, name: `${student.first} ${student.last}`, program: student.program, level: student.level, termId: plan.termId, term: db.prepare('SELECT label FROM terms WHERE id=?').get(plan.termId).label, status: plan.status, subjects: plan.subjects.join(', '), sections };
     });
     if ((!filters.term || filters.term === activeTerm().id) && (!filters.status || filters.status === 'unassigned')) {
@@ -885,7 +912,7 @@ export function openStore(path, { now = () => new Date() } = {}) {
   }
   function auditHistory(actor) {
     if (!['registrar', 'department_head'].includes(actor?.role)) failure('Staff access is required.', 403);
-    const ids = new Set(list(actor).students.map(student => student.id));
+    const ids = new Set(studentRows(actor).map(student => student.id));
     return db.prepare('SELECT id,COALESCE(actor_label,actor_id) AS actor,action,entity,entity_id AS entityId,at FROM audit_log ORDER BY id DESC').all().filter(row => actor.role === 'registrar' || (row.entity === 'enrollment' && ids.has(row.entityId.split(':')[0])));
   }
   return { createBlock, assignHomeBlock, createBlockTerm, addBlockClass, linkBlockClass, offerBlockPlan, importCurriculum, evaluation, recordResults, chooseBackSubjects, resources, addResource, issueReset, redeemReset, close: () => db.close(), publicTerm: activeTerm, list, createTerm, activateTerm, addStudent, registerStudent, reviewStudent, studentStatus, registrarPassword, setRegistrarPassword, updateStudent, addSection, allocate, allocateMany, completeSubject, drop, importData, staffPassword, setStaffPassword, studentPassword, setStudentPassword, studentByCredentials, limitedPublicStatus, studentView, addCurriculum, assignSubjects, offerPlan, respondPlan, confirmPlan, reports, auditHistory };

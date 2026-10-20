@@ -104,3 +104,10 @@ Use components from [jQuery UI](https://jqueryui.com/) for relevant interactive 
 - `navigation.js` owns desktop collapse preference and the mobile drawer. `navigation.css` styles staff and student navigation; public homepage navigation styles remain in `home-taste.css`.
 - Mobile staff navigation starts closed, contains keyboard focus while open, supports Escape and backdrop dismissal, and closes after selecting a destination. Do not replace it with a full navigation grid above the content.
 - Keep the overview task queue paged and detailed capacity analytics optional. Student first-password setup stays contextual; signed-in student shortcuts point to existing offer, timetable and history sections.
+
+## Audit and reliability conventions
+
+- Initial Department Head setup must be an atomic insert-only operation; verified recovery remains the path for replacing its password. Main and practice instances use distinct cookie names because localhost cookies are shared across ports.
+- Publish new backups only after integrity, foreign-key and core-schema verification, without overwriting an existing recovery point. Existing daily files must also be verified. The exclusive publish operation requires filesystem hard-link support; report failure rather than silently treating an invalid file as a backup.
+- Staff client conflict checks use `schedule-rules.js` for meeting times and academic date ranges; server validation remains authoritative. Keep independent directory queries and reuse the form submission guard for busy/error feedback.
+- Use the representative 480-student load check in addition to the small in-memory smoke test. Do not claim the performance requirement passes while the full-data endpoint misses its p95 target. Preserve API contracts and role scoping when replacing the all-record bootstrap with paginated/on-demand reads.
