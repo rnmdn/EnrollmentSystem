@@ -6,6 +6,8 @@ import 'jquery-ui-dist/jquery-ui.css';
 import './styles.css';
 import './ui-refresh.css';
 import './plp.css';
+import './navigation.css';
+import { initStaffNavigation, updateStaffNavigation } from './navigation.js';
 import { programs as plpPrograms } from './institution.js';
 import { evaluateGrade } from './grade.js';
 import { parseResultCSV } from './csv.js';
@@ -17,6 +19,7 @@ let publicConfig = {}, publicConfigError = '';
 const evaluations = new Map(), resultPreviews = new Map();
 let recoveryResult = null;
 let selectedBlockId=0,blockTab=0;
+let taskPage = 0;
 let ready = false, auth = { configured: false, authenticated: false };
 let draftStudentId = '', draftSections = [], assignmentStudentId = '', assignmentCodes = [];
 let curriculumFilter = { program: '', yearLevel: '', semester: '' }, reportFilter = { term: '', program: '', status: '' }, viewRevision = 0;
@@ -72,6 +75,7 @@ $(document).on('input change', '#main form input, #main form select, #main form 
   if (saved) { saved.values = formValues(this.form); saved.dirty = JSON.stringify(saved.values) !== saved.baseline; }
 });
 readRoute();
+initStaffNavigation();
 const types = { regular: 'Regular', back_subject: 'Back subject', transferee: 'Transferee', returning: 'Returning', academic_recovery: 'Academic recovery', accessible_learning: 'Accessible learning' };
 const isRegistrar = () => auth.role === 'registrar';
 const isSpecial = student => student && (student.studentType || 'regular') !== 'regular';
@@ -175,7 +179,11 @@ function taskQueue() {
   for (const plan of accepted) rows.push('<tr><td><strong>' + esc(fullName(studentById(plan.studentId))) + '</strong><small>' + esc(plan.studentId) + '</small></td><td>Accepted · awaiting confirmation</td><td><button class="button small" data-page="enroll" data-student="' + esc(plan.studentId) + '" type="button">Review and confirm schedule</button></td></tr>');
   for (const student of special) rows.push('<tr><td>' + esc(fullName(student)) + '<small>' + esc(student.id) + '</small></td><td>Subject assignment needed</td><td><button class="button small" data-page="assignments" data-student="' + esc(student.id) + '" type="button">Review subjects</button></td></tr>');
   for (const student of preparation) rows.push('<tr><td>' + esc(fullName(student)) + '<small>' + esc(student.id) + '</small></td><td>Subjects or schedule need preparation</td><td><button class="button small" data-page="enroll" data-student="' + esc(student.id) + '" type="button">Prepare schedule</button></td></tr>');
-  return '<section class="panel task-queue" aria-label="Enrollment tasks"><div class="panel-head"><div><h2>Needs your attention</h2><p class="panel-note">' + rows.length + ' tasks in the records available to your role</p></div></div>' + (rows.length ? table(['Student','Task','Action'], rows) : empty('All caught up', 'No tasks are awaiting your action.')) + '</section>';
+  const pageSize = 8;
+  taskPage = Math.min(taskPage, Math.max(0, Math.ceil(rows.length / pageSize) - 1));
+  const start = taskPage * pageSize;
+  const paging = rows.length > pageSize ? `<div class="task-pagination"><span>Tasks ${start + 1}-${Math.min(start + pageSize, rows.length)} of ${rows.length}</span><div class="button-row"><button class="button small" data-task-page="${taskPage - 1}" ${taskPage === 0 ? 'disabled' : ''} type="button">Previous tasks</button><button class="button small" data-task-page="${taskPage + 1}" ${start + pageSize >= rows.length ? 'disabled' : ''} type="button">Next tasks</button></div></div>` : '';
+  return '<section class="panel task-queue" aria-label="Enrollment tasks"><div class="panel-head"><div><h2>Needs your attention</h2><p class="panel-note">' + rows.length + ' tasks in the records available to your role</p></div></div>' + (rows.length ? table(['Student','Task','Action'], rows.slice(start, start + pageSize)) + paging : empty('All caught up', 'No tasks are awaiting your action.')) + '</section>';
 }
 function overview() {
   if (!isRegistrar()) return heading('', 'Enrollment tasks', 'Review special cases in the records available to your role.') + noticeHTML() + taskQueue();
@@ -183,9 +191,9 @@ function overview() {
   const seats = data.sections.reduce((sum, section) => sum + section.capacity, 0);
   const occupied = data.enrollments.length;
   return heading('Workspace overview', 'Enrollment tasks', `Student and section records for ${termLabel()}.`, `<button class="button primary" data-page="enroll" type="button"><i class="ph ph-plus" aria-hidden="true"></i> New enrollment</button>`) + noticeHTML() + taskQueue() +
-    `<div class="overview-grid" aria-label="Current term summary"><div class="metric lead-metric"><span class="label">Students on record</span><strong>${data.students.length}</strong><small>${active} active student${active === 1 ? '' : 's'}</small></div><div class="metric"><span class="label">Open sections</span><strong>${data.sections.filter(section => count(section.id) < section.capacity).length}</strong><small>of ${data.sections.length} scheduled</small></div><div class="metric"><span class="label">Enrollments</span><strong>${occupied}</strong><small>Reserved or confirmed seats</small></div><div class="metric"><span class="label">Seats remaining</span><strong>${seats - occupied}</strong><small>Across all sections</small></div></div>` +
-    enrollmentChart() +
-    `<div class="dashboard-grid"><section class="panel"><div class="panel-head"><div><h2>Recent student records</h2><p class="panel-note">Master records in the registry</p></div><button class="text-button" data-page="students" type="button">View all <i class="ph ph-arrow-right" aria-hidden="true"></i></button></div>${data.students.length ? `<div class="table-wrap" role="region" tabindex="0" aria-label="Staff records table; scroll horizontally for all columns"><table class="data-table"><thead><tr><th>Student</th><th>Student ID</th><th>Program</th><th>Status</th></tr></thead><tbody>${data.students.slice(-4).reverse().map(student => `<tr><td><strong>${esc(fullName(student))}</strong></td><td class="id-code">${esc(student.id)}</td><td>${esc(student.program)}</td><td>${badge(student.status)}</td></tr>`).join('')}</tbody></table></div>` : empty('No student records yet', 'Register a student to start the master registry.')}</section><section class="panel action-panel"><div class="panel-head"><div><h2>At your desk</h2><p class="panel-note">Start a registry task</p></div></div><div class="quick-list"><button class="quick-action" data-page="student-new" type="button"><i class="ph ph-student" aria-hidden="true"></i><span><strong>Register a student</strong><small>Assign a permanent student number</small></span><i class="ph ph-arrow-right" aria-hidden="true"></i></button><button class="quick-action" data-page="section-new" type="button"><i class="ph ph-books" aria-hidden="true"></i><span><strong>Create a section</strong><small>Add a class to this term</small></span><i class="ph ph-arrow-right" aria-hidden="true"></i></button><button class="quick-action" data-page="enroll" type="button"><i class="ph ph-arrows-left-right" aria-hidden="true"></i><span><strong>Allocate a section</strong><small>Check seats and meeting times</small></span><i class="ph ph-arrow-right" aria-hidden="true"></i></button></div></section></div>`;
+    `<div class="overview-grid" aria-label="Current term summary"><div class="metric lead-metric"><span class="label">Students on record</span><strong>${data.students.length}</strong><small>${active} active student${active === 1 ? '' : 's'}</small></div><div class="metric"><span class="label">Classes with seats</span><strong>${data.sections.filter(section => count(section.id) < section.capacity).length}</strong><small>of ${data.sections.length} scheduled classes</small></div><div class="metric"><span class="label">Subject reservations</span><strong>${occupied}</strong><small>Reserved or confirmed seats</small></div><div class="metric"><span class="label">Seats remaining</span><strong>${seats - occupied}</strong><small>Across all sections</small></div></div>` +
+    `<details class="overview-analytics"><summary>Class capacity details</summary>${enrollmentChart()}</details>` +
+    `<div class="dashboard-grid"><section class="panel"><div class="panel-head"><div><h2>Recent student records</h2><p class="panel-note">Master records in the registry</p></div><button class="text-button" data-page="students" type="button">View all <i class="ph ph-arrow-right" aria-hidden="true"></i></button></div>${data.students.length ? `<div class="table-wrap" role="region" tabindex="0" aria-label="Staff records table; scroll horizontally for all columns"><table class="data-table"><thead><tr><th>Student</th><th>Student ID</th><th>Program</th><th>Status</th></tr></thead><tbody>${data.students.slice(-4).reverse().map(student => `<tr><td><strong>${esc(fullName(student))}</strong></td><td class="id-code">${esc(student.id)}</td><td>${esc(student.program)}</td><td>${badge(student.status)}</td></tr>`).join('')}</tbody></table></div>` : empty('No student records yet', 'Register a student to start the master registry.')}</section><section class="panel action-panel"><div class="panel-head"><div><h2>At your desk</h2><p class="panel-note">Start a registry task</p></div></div><div class="quick-list"><button class="quick-action" data-page="student-new" type="button"><i class="ph ph-student" aria-hidden="true"></i><span><strong>Register a student</strong><small>Assign a permanent student number</small></span><i class="ph ph-arrow-right" aria-hidden="true"></i></button><button class="quick-action" data-page="sections" type="button"><i class="ph ph-books" aria-hidden="true"></i><span><strong>Manage sections</strong><small>Open a block roster or timetable</small></span><i class="ph ph-arrow-right" aria-hidden="true"></i></button><button class="quick-action" data-page="enroll" type="button"><i class="ph ph-arrows-left-right" aria-hidden="true"></i><span><strong>Prepare a schedule offer</strong><small>Check seats and meeting times</small></span><i class="ph ph-arrow-right" aria-hidden="true"></i></button></div></section></div>`;
 }
 
 function students() {
@@ -316,6 +324,7 @@ function render() {
   else if (page === 'staff') html = staffPage();
   else html = termsPage();
   $('#main').html(html);
+  updateStaffNavigation({ page, registrar: isRegistrar(), student: studentById(selectedStudentId), block: (data.blocks || []).find(block => Number(block.id) === selectedBlockId) });
   $('.top-actions .role').text(isRegistrar() ? 'Registrar signed in' : 'Department Head signed in');
   $('.top-actions .avatar').text(isRegistrar() ? 'R' : 'DH');
   $('.nav-link').each(function () { this.hidden = !isRegistrar() && !['overview','students','curriculum','assignments','schedule','reports','audit','evaluation'].includes(this.dataset.page); });
@@ -379,14 +388,20 @@ $(document).on('click', '[data-action="review-student"]', function () {
   ] });
 });
 
-$(document).on('click', '[data-page]', function () {
+function focusMain() { $('#main').trigger('focus'); window.scrollTo({ top: 0, behavior: 'instant' }); }
+
+$(document).on('click', '[data-task-page]', function () { taskPage = Number(this.dataset.taskPage); render(); $('.task-queue').attr('tabindex', '-1').trigger('focus'); });
+
+$(document).on('click', '[data-page]', function (event) {
   if (!staffViews.includes(this.dataset.page)) return;
+  if (this.tagName === 'A' && (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey)) return;
+  event.preventDefault();
   page = this.dataset.page;
   if (this.dataset.student) selectedStudentId = this.dataset.student;
-  render(); $('#main').trigger('focus');
+  render(); focusMain();
 });
-$(document).on('click', '[data-action="student-detail"]', function () { page = `student:${this.dataset.id}`; render(); $('#main').trigger('focus'); });
-$(document).on('click', '[data-action="student-edit"]', function () { page = `student-edit:${this.dataset.id}`; render(); $('#main').trigger('focus'); });
+$(document).on('click', '[data-action="student-detail"]', function () { page = `student:${this.dataset.id}`; render(); focusMain(); });
+$(document).on('click', '[data-action="student-edit"]', function () { page = `student-edit:${this.dataset.id}`; render(); focusMain(); });
 $(document).on('input', '#student-search, #section-search', function () {
   const position = this.selectionStart; query = this.value; syncRoute(true); render(); const next = document.getElementById(this.id); next.focus(); next.setSelectionRange(position, position);
 });
@@ -710,7 +725,7 @@ function recoveryResultHTML() {
   if (!recoveryResult) return '';
   return '<div class="notice separated-panel"><strong>Reset link generated</strong><p>' + esc(recoveryResult.label) + ' · Expires ' + esc(new Date(recoveryResult.expiresAt).toLocaleString()) + '</p><div class="field"><label for="recovery-link">Copy this link for the verified account holder</label><input id="recovery-link" type="text" readonly value="' + esc(recoveryResult.url) + '"></div><button class="button" id="copy-recovery-link" type="button">Copy reset link</button><p class="field-help">Share this link only with the verified account holder.</p></div>';
 }
-$(document).on('click', '#sidebar-toggle', function () { const collapsed = $('body').toggleClass('sidebar-collapsed').hasClass('sidebar-collapsed'); this.setAttribute('aria-expanded', String(!collapsed)); });
+
 $(document).on('click', '[data-action="retry-evaluation"]', function () { evaluations.delete(selectedStudentId); render(); });
 $(document).on('input change', '#result-mode, #result-raw, #result-grade', updateGradePreview);
 $(document).on('submit', '#result-form', function (event) { event.preventDefault(); submitWorkflow(this, async () => saveResultRows(this.dataset.student, [manualResult(this)], this)); });
@@ -811,7 +826,7 @@ function regularBlockOffer(student) {
   return heading('','Block schedule offer','Publish the student’s applicable home-block classes together.')+noticeHTML()+studentPicker('offer-student',student)+`<section class="panel"><h2>${esc(fullName(student))}</h2><p>${esc(student.id)} · ${esc(home?.label || 'Home block not assigned')}</p>${!home?'<p>Assign the student’s permanent block before preparing their offer.</p>':!term?'<p>Prepare the home block schedule for this year level and active term.</p>':table(['Subject','Block','Meeting','Room','Professor'],classes.map(row=>`<tr>${[row.code,row.blockLabel || row.section,row.day+' '+timeRange(row),row.room,row.instructor].map(value=>`<td>${esc(value)}</td>`).join('')}</tr>`))}${term && !complete?'<div class="notice">Some applicable curriculum subjects still need a scheduled class.</div>':''}<p class="field-help">Passed subjects are omitted. Prerequisites, standing, available seats and conflicts are checked before publishing. The student still accepts or declines the complete offer.</p><div class="form-actions"><button class="button primary" id="publish-block-offer" data-term="${term?.id || ''}" data-student="${esc(student.id)}" type="button" ${!complete || !student.reviewedAt || student.status!=='Active'?'disabled':''}>Review and publish block offer</button><button class="button" data-open-block="${home?.id || 0}" type="button">Manage block</button><button class="button" data-page="evaluation" data-student="${esc(student.id)}" type="button">Individual evaluation</button></div></section>`;
 }
 $(document).on('click','[data-action="show-section-form"]',function(){ $('#new-section').prop('open',true); document.getElementById('block-program')?.focus(); });
-$(document).on('click','[data-open-block]',function(){selectedBlockId=Number(this.dataset.openBlock);blockTab=0;page=selectedBlockId?'blocks':'sections';render();$('#main').trigger('focus');});
+$(document).on('click','[data-open-block]',function(){selectedBlockId=Number(this.dataset.openBlock);blockTab=0;page=selectedBlockId?'blocks':'sections';render();focusMain();});
 $(document).on('change','#block-room',function(){const room=(data.resources || []).find(row=>row.kind==='room' && row.name===this.value);if(room) $('#block-class-capacity').attr('max',Math.min(room.capacity,(data.blocks || []).find(row=>row.id===selectedBlockId)?.capacity || 500)).val(Math.min(Number($('#block-class-capacity').val()),room.capacity));});
 $(document).on('submit','#block-form',function(event){event.preventDefault();submitWorkflow(this,async()=>{const fields=Object.fromEntries(new FormData(this));fields.program=$('#block-program').val();const block=await api('/blocks','POST',fields);clearFormDraft(this);selectedBlockId=block.id;page='blocks';blockTab=0;await refreshData();alertUser('Permanent block created.');});});
 $(document).on('submit','#block-term-form',function(event){event.preventDefault();submitWorkflow(this,async()=>{await api('/block-terms','POST',{blockId:Number(this.dataset.block),yearLevel:Number($('#block-year').val()),source:$('#block-source').val()});clearFormDraft(this);await refreshData();alertUser('Curriculum subjects loaded. Add their scheduled classes.');});});

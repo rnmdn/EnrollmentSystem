@@ -152,3 +152,29 @@ try {
 } catch {
   $('#public-term').text('Enrollment service unavailable — please try again shortly.').addClass('service-unavailable');
 }
+
+// Keep the public navigation focused on enrollment guidance, programs and help.
+const homeMenu = document.getElementById('home-menu-toggle');
+const homeNavigation = document.getElementById('home-navigation');
+function closeHomeMenu() {
+  document.body.classList.remove('home-menu-open');
+  homeMenu.setAttribute('aria-expanded', 'false');
+}
+homeMenu.addEventListener('click', () => {
+  const open = document.body.classList.toggle('home-menu-open');
+  homeMenu.setAttribute('aria-expanded', String(open));
+});
+homeNavigation.addEventListener('click', event => { if (event.target.closest('a')) closeHomeMenu(); });
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && document.body.classList.contains('home-menu-open')) { closeHomeMenu(); homeMenu.focus(); }
+});
+matchMedia('(max-width: 760px)').addEventListener('change', closeHomeMenu);
+const sectionObserver = new IntersectionObserver(entries => {
+  for (const entry of entries) if (entry.isIntersecting) {
+    homeNavigation.querySelectorAll('a').forEach(link => {
+      if (link.hash === '#' + entry.target.id) link.setAttribute('aria-current', 'location');
+      else link.removeAttribute('aria-current');
+    });
+  }
+}, { rootMargin: '-10% 0px -55% 0px', threshold: 0 });
+['enrollment-guide', 'programs', 'questions'].forEach(id => sectionObserver.observe(document.getElementById(id)));

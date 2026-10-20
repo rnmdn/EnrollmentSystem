@@ -96,3 +96,11 @@ Use components from [jQuery UI](https://jqueryui.com/) for relevant interactive 
 - Curriculum and report filters apply on dropdown change, preserving keyboard focus and the selected values. There is no Apply filters step.
 - Remove Practice enrollment navigation and the walkthrough page from the application; keep isolated practice databases and CLI fixtures intact. Practice credentials are documented in the practice guides.
 - The user explicitly requested one fictional back-subject example in the main local database: example.backsubject@example.test, Example Backsubject, BSIT 2D, failed COMP 103. This is an exception to the normal isolated-fixtures rule. Preserve existing records and never reset its password or retake choice on restart. Its current-term dependent subjects are reported to the owning student as blocked; they cannot be assigned until the failed prerequisite is passed.
+
+## Navigation conventions
+
+- Staff destinations are grouped into Workspace, Students, Enrollment, Academic setup and Administration. Department Heads keep role-scoped links; their activity group retains Audit history.
+- Preserve legacy view URLs. Breadcrumbs and document titles identify nested student and section views; sidebar links keep real href targets and an active-page indicator.
+- `navigation.js` owns desktop collapse preference and the mobile drawer. `navigation.css` styles staff and student navigation; public homepage navigation styles remain in `home-taste.css`.
+- Mobile staff navigation starts closed, contains keyboard focus while open, supports Escape and backdrop dismissal, and closes after selecting a destination. Do not replace it with a full navigation grid above the content.
+- Keep the overview task queue paged and detailed capacity analytics optional. Student first-password setup stays contextual; signed-in student shortcuts point to existing offer, timetable and history sections.

@@ -155,3 +155,27 @@ body.enrollment-home { overflow-x: hidden; }
 .enrollment-home #program-directory.college-track.is-grid { cursor: default; }
 
 @media (max-width: 760px) { .college-programs { padding: 20px; } .college-programs-heading { align-items: flex-start; flex-direction: column; gap: 8px; } .college-programs ul { grid-template-columns: 1fr; } }
+
+/* Public navigation stays separate from the staff workspace. */
+.enrollment-home .home-menu-toggle { display: none; }
+.enrollment-home .university-header nav a[aria-current] { color: #153d30; text-decoration: underline; text-underline-offset: 7px; text-decoration-thickness: 2px; }
+.enrollment-home #enrollment-guide, .enrollment-home #programs, .enrollment-home #questions { scroll-margin-top: 24px; }
+@media (max-width: 760px) {
+  .enrollment-home .university-header { gap: 12px; }
+  .enrollment-home .home-menu-toggle { display: inline-flex; margin-left: auto; min-height: 44px; }
+  .enrollment-home .university-header .header-login { margin-left: 0; }
+  .enrollment-home .university-header nav { display: none; }
+  .enrollment-home.home-menu-open .university-header nav { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+}
+@media (max-width: 460px) {
+  .enrollment-home .university-header .university-brand { flex: 1 1 calc(100% - 100px); }
+  .enrollment-home .university-header .header-login { width: 100%; }
+}
+/* Keep the mobile masthead on one row; sign-in is already prominent in the hero. */
+@media (max-width: 460px) {
+  .enrollment-home .university-header .university-brand { flex: 1 1 0; min-width: 0; max-width: calc(100% - 105px); }
+  .enrollment-home .university-header .university-brand strong { font-size: 12px; }
+  .enrollment-home .university-header .university-logo { width: 40px; height: 40px; }
+  .enrollment-home .home-menu-toggle { flex: 0 0 auto; padding-inline: 12px; }
+  .enrollment-home .university-header .header-login { display: none; }
+}
