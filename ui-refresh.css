@@ -406,3 +406,7 @@ input::placeholder { color: #5c7061; opacity: 1; }
   .staff-page.print-evaluation .evaluation-report :is(button, .button, .text-button, .no-print) { display: none !important; }
   .staff-page.print-evaluation .result-failed, .staff-page.print-evaluation .result-passed { background: #fff; color: #000; }
 }
+
+/* Short resource tables should show capacities without the ledger-wide minimum. */
+.staff-page .resource-catalogs .data-table { min-width: 0; width: 100%; }
+.staff-page .resource-catalogs .data-table th, .staff-page .resource-catalogs .data-table td { white-space: normal; overflow-wrap: anywhere; }

@@ -115,11 +115,11 @@ The automated suite exercises these rules; live checks cover representative scre
 - Files: `app.js`.
 - Implementation: reuse `submitWorkflow`, expose `aria-busy`, disable submission and show Please wait while the operation runs, then restore the button on failure. Browser sign-in verified the loading label, busy attribute and disabled button. Server uniqueness/transaction guards remain necessary.
 
-**AUD-12 - Validation errors could be offscreen and duplicate catalog names exposed database wording. Fixed.**
+**AUD-12 - Catalog validation and resource-table feedback were difficult to use. Fixed.**
 
 - Evidence: a duplicate-room submission left its error at -2,168 px relative to the viewport while the user remained at the form. It retained the input but looked as if nothing happened.
-- Files: `app.js`, `server/db.js`, `server/evaluation.test.js`.
-- Implementation: focus/scroll the error notice without rerendering the form; return a clear 409 for duplicate room/professor names, including case/whitespace variants. Live retest placed the error at 96 px, focused the alert, preserved the entered value and re-enabled submission. No room was added.
+- Files: `app.js`, `ui-refresh.css`, `server/db.js`, `server/evaluation.test.js`.
+- Implementation: focus/scroll the error notice without rerendering the form; return a clear 409 for duplicate room/professor names, including case/whitespace variants. Live retest placed the error at 96 px, focused the alert, preserved the entered value and re-enabled submission. No room was added. Final visual review also found that the generic ledger table minimum hid the Capacity column on the two-column resource panel. The short resource tables now fit their panels without removing scrolling from wider enrollment tables.
 
 **AUD-13 - Main and practice sessions shared one localhost cookie name. Fixed.**
 
