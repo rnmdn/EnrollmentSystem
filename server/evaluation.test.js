@@ -29,6 +29,50 @@ function record(store, student, remark = 'failed', grade = remark === 'passed' ?
   return store.recordResults(student.id, [{ code: 'EX101', grade, remark }], registrar);
 }
 
+test('student grades cover four curriculum years and Summer without inventing missing grades', t => {
+  const { store, student } = fixture(t);
+  for (const [code, yearLevel, semester] of [['EX201',2,1],['EX202',2,2],['EX203',2,3],['EX301',3,1],['EX401',4,2]]) {
+    store.addCurriculum({ ...foundation, code, title: `Example ${code}`, yearLevel, semester }, registrar);
+  }
+  store.recordResults(student.id, [{code:'EX101',rawGrade:'88.50'}, {code:'EX201',grade:'5.00'}], registrar);
+  store.completeSubject(student.id, 'EX301', registrar);
+  const other = store.addStudent({...person, first:'Other', email:'other-grades@example.test'}, registrar);
+  store.recordResults(other.id, [{code:'EX101',grade:'1.00'}], registrar);
+  const before = store.evaluation(student.id, registrar);
+  const grades = store.studentGrades(student.id);
+  assert.equal(grades.id, student.id);
+  assert.deepEqual([...new Set(grades.subjects.map(row => row.yearLevel))], [1,2,3,4]);
+  const byCode = Object.fromEntries(grades.subjects.map(row => [row.code,row]));
+  assert.equal(byCode.EX101.grade, '1.75');
+  assert.equal(byCode.EX101.rawGrade, '88.50');
+  assert.equal(byCode.EX101.remark, 'passed');
+  assert.equal(byCode.EX201.remark, 'failed');
+  assert.equal(byCode.EX203.semester, 3);
+  assert.equal(byCode.EX301.remark, 'passed');
+  assert.equal(byCode.EX301.grade, '', 'legacy completion has no fabricated numeric grade');
+  assert.equal(byCode.EX401.grade, '');
+  assert.equal(byCode.EX401.remark, 'not_taken');
+  assert.equal(byCode.EX401.updatedAt, null);
+  assert.equal('subjectId' in byCode.EX101, false);
+  assert.deepEqual(store.evaluation(student.id, registrar), before, 'reading grades does not change evaluation or prerequisites');
+});
+
+test('student grades preserve recorded results outside the current curriculum and use program-specific titles', t => {
+  const store = openStore(':memory:');
+  t.after(() => store.close());
+  const shared = { ...foundation, code:'SHARED', title:'Program one title', prerequisites:'', minimumYear:0, minimumPassedUnits:0 };
+  store.importCurriculum({version:'Example source',subjects:[shared,{...shared,program:'Other program',title:'Program two title'}]},registrar);
+  const student = store.addStudent(person, registrar);
+  store.recordResults(student.id,[{code:'SHARED',grade:'2.00'}],registrar);
+  assert.equal(store.studentGrades(student.id).subjects[0].title, shared.title);
+  store.updateStudent(student.id, {...person, program:'No curriculum program'}, registrar);
+  const grades = store.studentGrades(student.id);
+  assert.deepEqual(grades.subjects, []);
+  assert.equal(grades.otherResults[0].code, 'SHARED');
+  assert.equal(grades.otherResults[0].grade, '2.00');
+  assert.equal('subjectId' in grades.otherResults[0], false);
+});
+
 function completed(store, student) {
   return store.list(registrar).completed.filter(row => row.studentId === student.id).map(row => row.code).sort();
 }

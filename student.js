@@ -98,7 +98,7 @@ function setRoute(view, replace = false) {
     if (url.href !== location.href) history[replace ? 'replaceState' : 'pushState'](null, '', url);
   }
   content.attr('data-view', view || 'dashboard');
-  const names = {register:'Registration',login:'Student sign in',status:'Registration status',account:'First password',help:'Help & recovery',receipt:'Registration receipt',success:'Registration receipt',reset:'Reset password'};
+  const names = {grades:'My grades',register:'Registration',login:'Student sign in',status:'Registration status',account:'First password',help:'Help & recovery',receipt:'Registration receipt',success:'Registration receipt',reset:'Reset password'};
   document.title = `${names[view] || 'My enrollment'} | PLP Enrollment`;
   $('#student-location').remove();
   const trail = $('<nav id="student-location" class="student-location" aria-label="Breadcrumb"></nav>');
@@ -377,6 +377,42 @@ function meetingTime(value) {
   if (!Number.isInteger(hour) || !Number.isInteger(minute)) return 'Time not recorded';
   return `${hour % 12 || 12}:${String(minute).padStart(2, '0')} ${hour < 12 ? 'AM' : 'PM'}`;
 }
+function gradeRows(rows) {
+  const labels = { passed: 'Passed', failed: 'Failed', not_taken: 'Not taken' };
+  return `<ul class="grade-list">${rows.map(row => `<li class="grade-row"><div class="grade-subject"><strong>${esc(row.code)}</strong><span>${esc(row.title)}</span>${row.recordedTerm ? `<small>Recorded term: ${esc(row.recordedTerm)}</small>` : ''}</div><dl><div><dt>Units</dt><dd>${esc(row.units)}</dd></div><div><dt>Raw grade</dt><dd>${row.rawGrade ? `${esc(row.rawGrade)}%` : '<span aria-label="Not recorded">—</span>'}</dd></div><div><dt>Grade</dt><dd>${row.grade ? esc(row.grade) : '<span aria-label="Not recorded">—</span>'}</dd></div><div><dt>Remark</dt><dd><span class="grade-remark ${row.remark === 'failed' ? 'grade-failed' : ''}">${esc(labels[row.remark] || 'Not taken')}</span></dd></div></dl></li>`).join('')}</ul>`;
+}
+function renderGrades(result) {
+  const years = [1, 2, 3, 4];
+  const yearNames = ['1st year', '2nd year', '3rd year', '4th year'];
+  const subjects = result.subjects;
+  showScreen(`<div class="page-heading"><div><h1>My grades</h1><p class="subtitle">${esc(result.name)} · <strong>${esc(result.id)}</strong><br>${esc(result.program)}</p></div><div class="button-row"><a class="button" href="/student.html" data-student-view="dashboard">My enrollment</a><button class="button" id="refresh-grades" type="button">Refresh grades</button><button class="button" id="student-logout" type="button">Sign out</button></div></div><p class="grade-explanation">View your recorded results by curriculum year and semester. Contact the Registrar if a result needs correction.</p><details class="grade-key"><summary>How to read these results</summary><p>A dash means no numeric grade is recorded. Not taken means no evaluated result is recorded. A legacy completion may show Passed without a numeric grade. This page shows current results; it is not an official transcript or a history of retake attempts.</p></details><div class="grade-controls"><label for="grade-year">Year level</label><select id="grade-year"><option value="all">All years</option>${years.map((year, i) => `<option value="${year}">${yearNames[i]}</option>`).join('')}</select><p id="grade-count" role="status">${subjects.length} curriculum subjects</p></div>${subjects.length ? years.map((year, i) => `<section class="grade-year" data-grade-year="${year}" aria-labelledby="grade-year-${year}"><h2 id="grade-year-${year}">${yearNames[i]}</h2>${[1, 2, 3].filter(semester => subjects.some(row => row.yearLevel === year && row.semester === semester)).map(semester => {
+    const rows = subjects.filter(row => row.yearLevel === year && row.semester === semester);
+    const sources = [...new Set(rows.map(row => row.source).filter(Boolean))];
+    return `<section class="panel grade-semester" aria-labelledby="grade-semester-${year}-${semester}"><h3 id="grade-semester-${year}-${semester}">${semester === 3 ? 'Summer' : `Semester ${semester}`}</h3>${sources.length ? `<p class="field-help">Curriculum: ${esc(sources.join(', '))}</p>` : ''}${gradeRows(rows)}</section>`;
+  }).join('') || '<p class="empty">No curriculum subjects recorded for this year.</p>'}</section>`).join('') : '<section class="panel"><h2>Curriculum not available</h2><p>The subject list for your program has not been loaded yet. Any existing results are shown below. Contact the Registrar for your complete evaluation.</p></section>'}${result.otherResults.length ? `<section class="panel grade-other"><h2>Other recorded subjects</h2><p>These results are not listed in your current program curriculum.</p>${gradeRows(result.otherResults)}</section>` : ''}`);
+  $('#grade-year').on('change', function () {
+    const year = this.value;
+    $('[data-grade-year]').each(function () { this.hidden = year !== 'all' && this.dataset.gradeYear !== year; });
+    $('#grade-count').text(`${subjects.filter(row => year === 'all' || row.yearLevel === Number(year)).length} curriculum subjects`);
+  });
+}
+async function openGrades() {
+  setRoute('grades');
+  showScreen('<section class="panel"><h1>My grades</h1><p role="status">Loading your results…</p><a class="button" href="/student.html" data-student-view="dashboard">My enrollment</a></section>');
+  const revision = screenRevision;
+  try {
+    const result = await api('/me/grades');
+    if (revision === screenRevision) renderGrades(result);
+  } catch (error) {
+    if (revision !== screenRevision) return;
+    if (error.status === 401) { session = null; me = null; loginForm('Your session has ended. Sign in to view your grades.'); }
+    else {
+      showScreen('<section class="panel"><h1>My grades</h1><div class="button-row"><button class="button" id="refresh-grades" type="button">Try again</button><a class="button" href="/student.html" data-student-view="dashboard">My enrollment</a></div></section>');
+      showError(error);
+    }
+  }
+}
+$(document).on('click', '#refresh-grades', openGrades);
 function dashboard(result) {
   me = result;
   setRoute(null, true);
@@ -391,6 +427,7 @@ function dashboard(result) {
   const currentStep = status === 'confirmed' ? 4 : status === 'accepted' ? 3 : status === 'pending' ? 2 : 1;
   const days = [...new Set(['Monday','Tuesday','Wednesday','Thursday','Friday', ...classes.map(c => c.day)])];
   showScreen(`<div class="page-heading"><div><h1>${esc(result.name)}</h1><p class="subtitle">Student ID <strong class="id-code">${esc(result.id)}</strong> · ${esc(result.term)}</p>${result.homeBlock ? `<p class="subtitle">Home block <strong>${esc(result.homeBlock.label)}</strong></p>` : ''}</div><div class="button-row"><button class="button" id="refresh-student" type="button">Refresh status</button>${status === 'confirmed' ? '<button class="button primary" id="print-confirmation" type="button">Print confirmation</button>' : ''}<button class="button" id="student-logout" type="button">Sign out</button></div></div><div class="print-heading"><strong>${esc(config.institution.name)}</strong><span>Enrollment confirmation</span></div><nav class="student-page-links" aria-label="On this page"><a href="#enrollment-offer">Status &amp; offer</a>${classes.length ? '<a href="#weekly-timetable">Weekly timetable</a>' : ''}<a href="#enrollment-history">Enrollment history</a></nav><ol class="enrollment-progress" aria-label="Enrollment progress">${progress.map((label, index) => `<li class="${index < currentStep ? 'complete' : index === currentStep ? 'current' : ''}" ${index === currentStep ? 'aria-current="step"' : ''}>${esc(label)}${index < currentStep ? '<span class="sr-only"> — completed</span>' : ''}</li>`).join('')}</ol>${backSubjectPanel(result)}${nextStep(status, result.reviewed, result.updatedAt, result.backSubjects, plan)}<section class="panel current-enrollment" id="enrollment-offer" tabindex="-1"><div class="panel-head"><div><h2>${status === 'confirmed' ? 'Confirmed schedule' : ['pending','accepted','declined'].includes(status) ? 'Enrollment offer' : 'Enrollment status'}</h2><p class="panel-note">${esc(statusLabels[status] || status)}${plan ? ` · Offer version ${esc(plan.revision)}` : ''}</p></div></div><p class="workflow-explanation">${esc(explanations[status] || 'Refresh to see your latest enrollment status.')}</p>${plan?.subjects?.length ? `<p>Assigned subjects: <strong>${esc(plan.subjects.join(', '))}</strong></p>` : ''}${classes.length ? `<p class="workload-summary"><strong>${classes.length} subject${classes.length === 1 ? '' : 's'}</strong> · ${unitsKnown ? `${esc(units)} total units` : 'Total units not recorded; ask the Registrar.'}</p>${scheduleTable(classes)}` : `<div class="empty">${status === 'declined' ? 'No seats are reserved for this declined offer.' : 'No schedule offer is available yet.'}</div>`}${status === 'pending' ? '<div class="form-actions"><button class="button primary" data-response="accepted" type="button">Accept complete offer</button><button class="button" data-response="declined" type="button">Decline offer</button></div>' : ''}</section>${classes.length ? `<section class="panel separated-panel weekly-schedule" id="weekly-timetable" tabindex="-1"><div class="panel-head"><h2>Weekly timetable</h2></div><p class="field-help">Scroll sideways to view all days, or use the complete subject list above.</p><div class="schedule-grid" role="region" aria-label="Weekly timetable; scroll horizontally for more days" tabindex="0" style="--student-days:${days.length}">${days.map(day => `<div class="day-column"><div class="day-title">${esc(day)}</div>${classes.filter(c => c.day === day).sort((a,b) => a.start.localeCompare(b.start)).map(c => `<div class="class-card"><span>${esc(meetingTime(c.start))} – ${esc(meetingTime(c.end))}</span><strong>${esc(c.code)} · ${esc(c.section)}</strong><small>${esc(c.title)}<br>${esc(c.room)} · ${esc(c.instructor)}</small></div>`).join('')}</div>`).join('')}</div></section>` : ''}${status === 'confirmed' ? '<p class="print-disclaimer">Keep this copy for your records. Contact the Registrar if any enrollment details need correction.</p>' : ''}<section class="panel separated-panel enrollment-history" id="enrollment-history" tabindex="-1"><h2>Enrollment history</h2>${result.history?.length ? `<div class="table-wrap" role="region" aria-label="Enrollment history" tabindex="0"><table class="data-table"><thead><tr><th scope="col">Term</th><th scope="col">Status</th><th scope="col">Offer version</th><th scope="col">Subjects</th></tr></thead><tbody>${result.history.map(h => `<tr><td>${esc(h.term || h.termId)}</td><td>${esc(statusLabels[h.status] || h.status)}</td><td>${esc(h.revision)}</td><td>${esc((h.subjects || []).join(', '))}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">No enrollment history yet.</div>'}</section>`);
+  content.find('.student-page-links').attr('aria-label', 'Student navigation').append('<a href="/student.html?view=grades" data-student-view="grades">My grades</a>');
   promptBackSubjects(result);
 }
 async function refreshStudent() {
@@ -424,6 +461,8 @@ $(document).on('click', '#copy-student-id', async function () {
 $(document).on('click', '[data-student-view]', function(event) {
   if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button > 0) return;
   event.preventDefault();
+  if (this.dataset.studentView === 'grades' && session?.role === 'student') { openGrades(); return; }
+  if (this.dataset.studentView === 'dashboard' && session?.role === 'student') setRoute(null);
   if (this.dataset.studentView === 'reset') { resetForm(); return; }
   if (this.dataset.studentView === 'help') { helpForm(); return; }
   if (session?.role === 'student') { if (me) dashboard(me); else refreshStudent(); return; }
@@ -530,11 +569,15 @@ async function openStudentDashboard() {
 function requestedScreen() {
   if (new URL(location.href).searchParams.get('view') === 'reset') { resetForm(); return; }
   if (new URL(location.href).searchParams.get('view') === 'help') { helpForm(); return; }
-  if (session?.role === 'student') { if (me) dashboard(me); else return openStudentDashboard(); }
+  if (session?.role === 'student') {
+    if (new URL(location.href).searchParams.get('view') === 'grades') return openGrades();
+    if (me) dashboard(me); else return openStudentDashboard();
+  }
   else if (session) staffSession();
   else {
     const view = new URL(location.href).searchParams.get('view');
-    if (view === 'success') registrationSuccess();
+    if (view === 'grades') loginForm('Sign in to view your grades.');
+    else if (view === 'success') registrationSuccess();
     else if (view === 'login') loginForm();
     else if (view === 'status') statusForm();
     else if (view === 'account') accountForm();

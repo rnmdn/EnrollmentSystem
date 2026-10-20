@@ -207,6 +207,10 @@ export function startServer(port = 3001, databasePath = resolve(root, 'data', 'r
         sessions.delete(sessionId(req));
         json(res, 200, { authenticated: false }, { 'set-cookie': cookie('') }); return;
       }
+      if (path === '/me/grades' && req.method === 'GET') {
+        requireRole('student');
+        json(res, 200, store.studentGrades(actor.id)); return;
+      }
       if (path === '/me' && req.method === 'GET') {
         requireRole('student');
         json(res, 200, store.studentView(actor.id)); return;

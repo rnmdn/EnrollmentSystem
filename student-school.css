@@ -261,7 +261,35 @@
   .student-school .student-session-panel h1 { font-size: 36px; }
   .student-school .student-footer { padding-inline: 22px; align-items: flex-start; }
 }
+.student-school .grade-explanation { max-width: 85ch; line-height: 1.6; margin-bottom: 24px; }
+.student-school .grade-key { margin: -12px 0 24px; max-width: 85ch; }
+.student-school .grade-key summary { cursor: pointer; min-height: 44px; align-content: center; text-decoration: underline; text-underline-offset: 4px; }
+.student-school .grade-key p { line-height: 1.6; }
+.student-school .grade-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 28px; }
+.student-school .grade-controls label { font-weight: 600; }
+.student-school .grade-controls select { width: auto; min-width: 160px; min-height: 44px; }
+.student-school .grade-controls p { margin: 0; }
+.student-school .grade-year { margin-block: 32px; }
+.student-school .grade-year > h2 { font-size: 28px; margin-bottom: 16px; }
+.student-school .grade-semester { margin-bottom: 18px; padding: 24px; }
+.student-school .grade-semester h3 { margin: 0 0 6px; font-size: 20px; }
+.student-school .grade-list { list-style: none; margin: 16px 0 0; padding: 0; }
+.student-school .grade-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 1fr); gap: 24px; padding: 16px 0; border-top: 1px solid #ccd9d0; }
+.student-school .grade-subject { display: grid; align-content: start; gap: 4px; min-width: 0; }
+.student-school .grade-subject span { line-height: 1.5; overflow-wrap: anywhere; }
+.student-school .grade-subject small { color: #445f56; font-size: 14px; }
+.student-school .grade-row dl { display: grid; grid-template-columns: .65fr 1fr .8fr 1.15fr; gap: 12px; margin: 0; }
+.student-school .grade-row dt { font-size: 14px; color: #445f56; margin-bottom: 5px; }
+.student-school .grade-row dd { margin: 0; font-size: 16px; font-variant-numeric: tabular-nums; }
+.student-school .grade-remark { font-weight: 600; }
+.student-school .grade-failed { color: #a32c18; }
+@media (max-width: 800px) {
+  .student-school .grade-row { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .student-school .grade-semester { padding: 20px 16px; }
+  .student-school .grade-row dl { gap: 8px; }
+}
 @media print {
+  .student-school .grade-controls { display: none; }
   @page { margin: 15mm; }
   .student-school { display: block; background: #fff; color: #000; }
   .student-school .student-masthead, .student-school .student-nav, .student-school .student-footer,

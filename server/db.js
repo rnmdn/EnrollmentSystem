@@ -887,6 +887,29 @@ export function openStore(path, { now = () => new Date() } = {}) {
       return plans().find(row => row.id === plan.id);
     });
   }
+  function studentGrades(number) {
+    const student = studentRecord(number);
+    // Staff evaluations contain private workflow fields, so use a separate, student-scoped read.
+    const results = db.prepare(`SELECT s.id AS subjectId,s.code,s.title,s.units,r.grade,r.raw_grade AS rawGrade,
+      r.remark,r.updated_at AS updatedAt,t.label AS recordedTerm
+      FROM academic_results r JOIN subjects s ON s.id=r.subject_id
+      LEFT JOIN terms t ON t.id=r.term_id WHERE r.student_id=? ORDER BY s.code`).all(student.id);
+    const bySubject = new Map(results.map(row => [row.subjectId, row]));
+    const completed = new Set(db.prepare('SELECT subject_id FROM completed_subjects WHERE student_id=?').all(student.id).map(row => row.subject_id));
+    const entries = db.prepare(`SELECT s.id AS subjectId,s.code,COALESCE(NULLIF(c.display_title,''),s.title) AS title,
+      s.units,c.year_level AS yearLevel,c.semester,c.source_label AS source
+      FROM curriculum c JOIN subjects s ON s.id=c.subject_id WHERE c.program=?
+      ORDER BY c.year_level,c.semester,s.code`).all(student.program);
+    const subjects = entries.map(({ subjectId, ...entry }) => {
+      const result = bySubject.get(subjectId);
+      return { ...entry, grade: result?.grade || '', rawGrade: result?.rawGrade || '',
+        remark: result?.remark || (completed.has(subjectId) ? 'passed' : 'not_taken'),
+        updatedAt: result?.updatedAt || null, recordedTerm: result?.recordedTerm || null };
+    });
+    const catalogIds = new Set(entries.map(row => row.subjectId));
+    const otherResults = results.filter(row => !catalogIds.has(row.subjectId)).map(({ subjectId, ...row }) => row);
+    return { id: number, name: `${student.first} ${student.last}`, program: student.program, subjects, otherResults };
+  }
   function studentView(number) {
     const student = studentRecord(number), plan = plans().find(row => row.studentId === number && row.termId === activeTerm().id) || null;
     const failed=failedRows(student.id),failedCodes=new Set(failed.map(row=>row.code));
@@ -915,5 +938,5 @@ export function openStore(path, { now = () => new Date() } = {}) {
     const ids = new Set(studentRows(actor).map(student => student.id));
     return db.prepare('SELECT id,COALESCE(actor_label,actor_id) AS actor,action,entity,entity_id AS entityId,at FROM audit_log ORDER BY id DESC').all().filter(row => actor.role === 'registrar' || (row.entity === 'enrollment' && ids.has(row.entityId.split(':')[0])));
   }
-  return { createBlock, assignHomeBlock, createBlockTerm, addBlockClass, linkBlockClass, offerBlockPlan, importCurriculum, evaluation, recordResults, chooseBackSubjects, resources, addResource, issueReset, redeemReset, close: () => db.close(), publicTerm: activeTerm, list, createTerm, activateTerm, addStudent, registerStudent, reviewStudent, studentStatus, registrarPassword, setRegistrarPassword, updateStudent, addSection, allocate, allocateMany, completeSubject, drop, importData, staffPassword, setStaffPassword, studentPassword, setStudentPassword, studentByCredentials, limitedPublicStatus, studentView, addCurriculum, assignSubjects, offerPlan, respondPlan, confirmPlan, reports, auditHistory };
+  return { createBlock, assignHomeBlock, createBlockTerm, addBlockClass, linkBlockClass, offerBlockPlan, importCurriculum, evaluation, recordResults, chooseBackSubjects, resources, addResource, issueReset, redeemReset, close: () => db.close(), publicTerm: activeTerm, list, createTerm, activateTerm, addStudent, registerStudent, reviewStudent, studentStatus, registrarPassword, setRegistrarPassword, updateStudent, addSection, allocate, allocateMany, completeSubject, drop, importData, staffPassword, setStaffPassword, studentPassword, setStudentPassword, studentByCredentials, limitedPublicStatus, studentGrades, studentView, addCurriculum, assignSubjects, offerPlan, respondPlan, confirmPlan, reports, auditHistory };
 }

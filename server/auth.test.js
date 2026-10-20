@@ -61,6 +61,12 @@ test('role boundaries apply to both API prefixes and actors cannot be supplied b
     }
     for (const path of ['/data','/reports','/audit']) assert.equal((await head(prefix + path)).status, 200, path);
     assert.equal((await registrar(prefix + '/me')).status, 403);
+    assert.equal((await anonymous(prefix + '/me/grades')).status, 401);
+    assert.equal((await registrar(prefix + '/me/grades')).status, 403);
+    assert.equal((await head(prefix + '/me/grades')).status, 403);
+    const ownGrades = await (await student(prefix + '/me/grades?studentId=26-99999')).json();
+    assert.equal(ownGrades.id, registration.id, 'student identity comes only from the session');
+    assert.deepEqual(Object.keys(ownGrades).sort(), ['id', 'name', 'otherResults', 'program', 'subjects']);
     assert.equal((await head(prefix + '/me/respond', 'POST', {status:'accepted',revision:1})).status, 403);
   }
   const headData = await (await head('/api/data')).json();

@@ -99,6 +99,8 @@ Use components from [jQuery UI](https://jqueryui.com/) for relevant interactive 
 
 ## Navigation conventions
 
+- Signed-in students can open `/student.html?view=grades` from My grades. The own-session `/me/grades` endpoint returns curriculum Years 1–4, separate Summer entries, and current evaluated results only. Preserve blank legacy grades, show missing results as Not taken, and never label this view an official transcript or full attempt history. Keep results outside the current curriculum visible in a separate group.
+
 - Staff destinations are grouped into Workspace, Students, Enrollment, Academic setup and Administration. Department Heads keep role-scoped links; their activity group retains Audit history.
 - Preserve legacy view URLs. Breadcrumbs and document titles identify nested student and section views; sidebar links keep real href targets and an active-page indicator.
 - `navigation.js` owns desktop collapse preference and the mobile drawer. `navigation.css` styles staff and student navigation; public homepage navigation styles remain in `home-taste.css`.
