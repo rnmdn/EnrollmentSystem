@@ -1,7 +1,3 @@
-# Current user override
-
-The user explicitly requested that Downloads/PLP_Enrollment_Management_System.html overwrite the previous application flow and design. The active entry points now run enrollment-reference.js and enrollment-reference.css, extracted from that supplied HTML. This supplied application uses browser localStorage (plp_ems_v1) and its own preset accounts. Existing server code and SQLite files are preserved but are not used by this replacement interface. Do not claim its records are saved to SQLite or that old database records have been migrated. The older instructions below describe the preserved implementation and yield to this override.
-
 # Enrollment System: agent instructions
 
 ## Project goal

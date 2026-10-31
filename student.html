@@ -1,9 +1,38 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>PLP Enrollment Management System</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&display=swap">
-
-</head><body>
-<div id="app"></div>
-<script type="module" src="/enrollment-reference.js"></script></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173f35">
+  <meta name="description" content="Register, check your record, and review your enrollment schedule at Pamantasan ng Lungsod ng Pasig.">
+  <link rel="icon" type="image/png" href="/plp-seal.png">
+  <title>Student Portal · Pamantasan ng Lungsod ng Pasig</title>
+</head>
+<body class="student-school">
+  <a class="skip-link" href="#student-main">Skip to main content</a>
+  <header class="student-masthead">
+    <a class="university-brand student-brand" href="/" aria-label="Pamantasan ng Lungsod ng Pasig enrollment home">
+      <img class="university-logo" src="/plp-seal.png" alt="" width="64" height="64">
+      <span class="student-wordmark"><strong id="student-institution-name">Pamantasan ng Lungsod ng Pasig</strong><span>Enrollment services</span></span>
+    </a>
+    <div class="student-header-tools">
+      <div class="student-term"><span>Academic term</span><strong id="student-active-term" aria-live="polite">Loading term…</strong></div>
+      <a class="student-staff-link" href="/staff.html">Staff sign in</a>
+      <a class="student-help-link" href="/student.html?view=help" data-student-view="help">Help &amp; recovery</a>
+    </div>
+  </header>
+  <nav class="student-nav" id="student-nav" aria-label="Student portal">
+    <a href="/student.html?view=register" data-student-view="register">Register</a>
+    <a href="/student.html?view=login" data-student-view="login">Student sign in</a>
+    <a href="/student.html?view=status" data-student-view="status">Check registration</a>
+  </nav>
+  <main class="student-portal" id="student-main">
+    <div id="student-content" tabindex="-1"></div>
+    <noscript><p class="notice error">Enable JavaScript to register or view your student enrollment record.</p></noscript>
+  </main>
+  <footer class="university-footer student-footer"><span>PLP Enrollment</span><a href="/student.html?view=help" data-student-view="help">Help &amp; recovery</a><a id="student-official-link" hidden>Official university website</a></footer>
+  <div id="student-dialog" title="Respond to schedule offer"></div>
+  <div id="student-status" class="sr-only" role="status" aria-live="polite"></div>
+  <script type="module" src="/student.js"></script>
+</body>
+</html>
