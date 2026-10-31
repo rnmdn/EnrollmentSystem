@@ -37,6 +37,12 @@ test('regular enrollment requires student acceptance before registrar confirmati
     assert.throws(() => store.respondPlan(student.id, 'declined', offer.revision, actor), /pending offer/);
     assert.deepEqual(store.auditHistory(registrar).filter(row => ['offer', 'accepted', 'confirm'].includes(row.action)).map(row => row.actor), ['registrar:registrar', `student:${student.id}`, 'registrar:registrar']);
     assert.equal(store.studentView(student.id).classes.length, 1);
+    const certificates = store.studentView(student.id).certificates;
+    assert.equal(certificates.length, 1);
+    assert.equal(certificates[0].classes[0].title, section.title);
+    assert.equal(certificates[0].classes[0].room, section.room);
+    store.createTerm({year:2027,semester:2},registrar);
+    assert.deepEqual(store.studentView(student.id).certificates, certificates);
   } finally { store.close(); }
 });
 
